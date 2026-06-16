@@ -40,7 +40,7 @@ build the Windows `.exe` on a Windows machine.
 |------|-------|
 | Find Steam + library folders | `core/steam_paths.py` |
 | List installed games (`appmanifest_*.acf`) | `core/games.py` |
-| List accounts (`loginusers.vdf`) + map games→accounts via Steam Web API | `core/accounts.py` |
+| List accounts (`loginusers.vdf`) + map games→accounts from local Steam data | `core/accounts.py` |
 | Switch account (registry + loginusers) and control the Steam process | `core/switcher.py` |
 | Orchestrate switch → launch | `core/launcher.py` |
 | Native desktop GUI (Tkinter) | `app.py` |
@@ -53,11 +53,13 @@ build the Windows `.exe` on a Windows machine.
 2. Run `python app.py` (or the built `SteamSwitch.exe`). Installed games are
    mapped to their owning account **automatically** from Steam's local data — no
    API key needed.
-3. If a game stays **unmapped** (can happen with some family-shared installs),
-   open **Accounts**, paste that account's free **Steam Web API key**
-   (<https://steamcommunity.com/dev/apikey>) and **Refresh owned** — or pin the
-   game to an account manually.
-4. Click any game to play.
+3. Click any game to play.
+
+Almost all installed games map automatically. A game can occasionally stay
+**unmapped** — some family-shared installs record no local owner — and there is
+currently **no in-app way to map one manually**, so those few can't be launched
+through SteamSwitch yet. The **Accounts** window is informational: it lists your
+accounts and how many installed games map to each.
 
 ## Two hard limitations (by Steam's design)
 

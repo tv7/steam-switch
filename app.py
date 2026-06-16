@@ -336,9 +336,9 @@ class App(tk.Tk):
             messagebox.showinfo(
                 "Not mapped",
                 f'"{game.name}" isn\'t mapped to an account yet.\n\n'
-                "Its appmanifest has no owner recorded (this happens with some "
-                "family-shared installs). Pin it to an account manually, or add "
-                "that account's Steam Web API key under Accounts and Refresh owned.")
+                "Its appmanifest records no local owner — this can happen with some "
+                "family-shared installs. There's no in-app way to map it manually "
+                "yet, so this game can't be launched through SteamSwitch for now.")
             return
         offline = self.offline_var.get()
         self._launching = True
