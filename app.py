@@ -23,7 +23,7 @@ from tkinter import ttk, messagebox
 from core import games, accounts, switcher, launcher, steam_paths, covers
 
 try:
-    from PIL import Image, ImageTk
+    from PIL import Image, ImageTk, ImageDraw, ImageFont
     HAVE_PIL = True
 except ImportError:
     HAVE_PIL = False
@@ -59,6 +59,99 @@ def _asset(name: str) -> Path:
     return base / "assets" / name
 
 
+# A fixed palette of distinct, vivid colors, legible on the dark gradient. Accounts
+# are assigned colors by their position in the list (see App.reload_accounts), which
+# guarantees they look different — a SteamID hash-to-hue clustered into lookalikes
+# because real SteamIDs differ only in their last digits.
+_ACCOUNT_PALETTE = [
+    (88, 166, 255),   # blue
+    (87, 204, 153),   # green
+    (255, 138, 101),  # orange
+    (199, 146, 234),  # purple
+    (255, 99, 132),   # pink
+    (255, 209, 102),  # yellow
+    (38, 198, 218),   # cyan
+    (240, 113, 178),  # magenta
+    (124, 179, 66),   # lime
+    (149, 117, 205),  # violet
+]
+_UNMAPPED_COLOR = (201, 79, 79)   # BAD red
+
+
+def _hex(rgb: tuple) -> str:
+    return "#%02x%02x%02x" % rgb
+
+
+# TrueType fonts give crisp anti-aliased text; try the platform's, fall back to
+# Pillow's bitmap default. Cached per size.
+_FONT_CACHE: dict = {}
+_FONT_PATHS = (
+    r"C:\Windows\Fonts\seguisb.ttf",   # Segoe UI Semibold (matches the app's font)
+    r"C:\Windows\Fonts\segoeuib.ttf",  # Segoe UI Bold
+    r"C:\Windows\Fonts\arialbd.ttf",   # Arial Bold
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+)
+
+
+def _cover_font(size: int):
+    if size in _FONT_CACHE:
+        return _FONT_CACHE[size]
+    font = None
+    for p in _FONT_PATHS:
+        try:
+            font = ImageFont.truetype(p, size)
+            break
+        except Exception:
+            continue
+    if font is None:
+        try:
+            font = ImageFont.load_default()
+        except Exception:
+            font = None
+    _FONT_CACHE[size] = font
+    return font
+
+
+def _truncate(draw, text: str, font, max_w: int) -> str:
+    """Trim `text` (adding an ellipsis) until it fits in `max_w` pixels."""
+    if draw.textlength(text, font=font) <= max_w:
+        return text
+    while text and draw.textlength(text + "…", font=font) > max_w:
+        text = text[:-1]
+    return (text + "…") if text else ""
+
+
+def _draw_account_badge(img, name: str, rgb: tuple):
+    """Composite a soft bottom gradient + account-color dot + name onto a portrait
+    cover (PIL RGB). Returns a new RGB image; readable over any artwork."""
+    w, h = img.size
+    base = img.convert("RGBA")
+
+    # Gradient: transparent at the top edge -> near-opaque dark at the bottom. Build
+    # it as a 1px-wide column and stretch (cheap), easing so the fade looks natural.
+    band = max(40, int(h * 0.40))
+    col = Image.new("RGBA", (1, band))
+    cpx = col.load()
+    for y in range(band):
+        cpx[0, y] = (8, 12, 18, int(220 * (y / (band - 1)) ** 1.5))
+    base.alpha_composite(col.resize((w, band)), (0, h - band))
+
+    draw = ImageDraw.Draw(base)
+    font = _cover_font(13)
+    pad = 8
+    bx = font.getbbox("Ag") if font else (0, 0, 0, 11)
+    text_h = bx[3] - bx[1]
+    text_y = h - pad - text_h
+    dot = 7
+    draw.ellipse([pad, text_y + (text_h - dot) // 2, pad + dot,
+                  text_y + (text_h - dot) // 2 + dot], fill=rgb + (255,))
+    tx = pad + dot + 6
+    name = _truncate(draw, name, font, w - tx - pad)
+    draw.text((tx + 1, text_y - bx[1] + 1), name, font=font, fill=(0, 0, 0, 200))
+    draw.text((tx, text_y - bx[1]), name, font=font, fill=(255, 255, 255, 255))
+    return base.convert("RGB")
+
+
 def _fit_portrait(img, w: int, h: int):
     """Scale + center-crop `img` to exactly w x h (like CSS background 'cover').
 
@@ -84,6 +177,7 @@ class App(tk.Tk):
 
         self.games: list = []
         self.accounts: list = []
+        self.account_colors: dict = {}   # steamid64 -> (r,g,b), assigned by position
         self.current_account: str | None = None
         self.images: dict[int, object] = {}   # keep PhotoImage refs alive
         self.cards: list[tk.Widget] = []
@@ -162,14 +256,29 @@ class App(tk.Tk):
                         style="Offline.TCheckbutton", takefocus=False
                         ).pack(side="right", padx=4)
 
-        # search
+        # search (+ filter dropdown to its right)
         sb = tk.Frame(self, bg=BG)
         sb.pack(fill="x", padx=16, pady=(12, 4))
+
+        # Filter ▾ : sort + filter-by-account. Search is unchanged; this only adds
+        # ordering/filtering on top of the search results (see render_grid).
+        self.sort_var = tk.StringVar(value="az")
+        self.filter_var = tk.StringVar(value="all")
+        fb = tk.Menubutton(sb, text="Filter ▾", bg=ACCENT2, fg="#fff",
+                           activebackground=ACCENT2_HOVER, activeforeground="#fff",
+                           relief="flat", padx=12)
+        self.filter_menu = tk.Menu(fb, tearoff=0, bg=PANEL, fg=TEXT,
+                                   activebackground=ACCENT2, activeforeground="#fff",
+                                   selectcolor=ACCENT, bd=0)
+        fb.config(menu=self.filter_menu)
+        fb.pack(side="right", padx=(8, 0))
+        self._build_filter_menu()
+
         self.search_var = tk.StringVar()
         self.search_var.trace_add("write", lambda *_: self.render_grid())
         e = tk.Entry(sb, textvariable=self.search_var, bg=PANEL, fg=TEXT,
                      insertbackground=TEXT, relief="flat")
-        e.pack(fill="x", ipady=5)
+        e.pack(side="left", fill="x", expand=True, ipady=5)
         e.insert(0, "")
         self._placeholder(e, "Filter games…")
 
@@ -238,7 +347,18 @@ class App(tk.Tk):
 
     def reload_accounts(self):
         self.accounts = accounts.list_accounts()
+        # Assign each account a distinct color by its position in the list.
+        self.account_colors = {
+            a.steamid64: _ACCOUNT_PALETTE[i % len(_ACCOUNT_PALETTE)]
+            for i, a in enumerate(self.accounts)
+        }
         self.current_account = switcher.current_account_name()
+        # Keep the Filter menu's account list in sync; reset a now-missing selection.
+        if hasattr(self, "filter_var"):
+            if (self.filter_var.get() not in ("all", "unmapped")
+                    and self.filter_var.get() not in {a.steamid64 for a in self.accounts}):
+                self.filter_var.set("all")
+            self._build_filter_menu()
         self.account_lbl.config(
             text=f"Logged in: {self.current_account}" if self.current_account
             else "No active account")
@@ -263,6 +383,30 @@ class App(tk.Tk):
         a = next((x for x in self.accounts if x.steamid64 == sid), None)
         return a.persona_name if a else None
 
+    def _color_for(self, sid):
+        """Distinct (r,g,b) for an account by its palette assignment; unmapped → red."""
+        return self.account_colors.get(sid, _UNMAPPED_COLOR) if sid else _UNMAPPED_COLOR
+
+    def _build_filter_menu(self):
+        """(Re)build the Filter ▾ menu: sort options + one entry per account. Called
+        once at startup and again whenever the account list changes."""
+        m = self.filter_menu
+        m.delete(0, "end")
+        m.add_command(label="Sort", state="disabled")
+        m.add_radiobutton(label="Name: A → Z", variable=self.sort_var, value="az",
+                          command=self.render_grid)
+        m.add_radiobutton(label="Name: Z → A", variable=self.sort_var, value="za",
+                          command=self.render_grid)
+        m.add_separator()
+        m.add_command(label="Show", state="disabled")
+        m.add_radiobutton(label="All accounts", variable=self.filter_var, value="all",
+                          command=self.render_grid)
+        for a in self.accounts:
+            m.add_radiobutton(label=a.persona_name, variable=self.filter_var,
+                              value=a.steamid64, command=self.render_grid)
+        m.add_radiobutton(label="Unmapped", variable=self.filter_var, value="unmapped",
+                          command=self.render_grid)
+
     # ------------------------------------------------------------- render
     def render_grid(self):
         for c in self.cards:
@@ -273,12 +417,26 @@ class App(tk.Tk):
         if flt == "filter games…":
             flt = ""
         visible = [g for g in self.games if flt in g.name.lower()]
+
+        # Filter by account (on top of the search results), then sort.
+        acct = self.filter_var.get() if hasattr(self, "filter_var") else "all"
+        if acct == "unmapped":
+            visible = [g for g in visible
+                       if not accounts.account_for_game(g.appid, self.accounts)]
+        elif acct != "all":
+            visible = [g for g in visible
+                       if accounts.account_for_game(g.appid, self.accounts) == acct]
+        reverse = hasattr(self, "sort_var") and self.sort_var.get() == "za"
+        visible.sort(key=lambda g: g.name.lower(), reverse=reverse)
+
         for i, g in enumerate(visible):
             self._make_card(g, i // cols, i % cols)
 
     def _make_card(self, game, row, col):
         owner_sid = accounts.account_for_game(game.appid, self.accounts)
         owner = self._account_name(owner_sid) if owner_sid else None
+        label_text = owner or "unmapped"
+        rgb = self._color_for(owner_sid)
 
         card = tk.Frame(self.grid_frame, bg=CARD, width=CARD_W, height=CARD_H,
                         highlightthickness=1, highlightbackground="#000",
@@ -291,25 +449,29 @@ class App(tk.Tk):
                         font=("Segoe UI", 10), justify="center")
         body.place(relx=0, rely=0, relwidth=1, relheight=1)
 
-        # account badge
-        badge = tk.Label(card, text=owner or "unmapped", bg="#000" if owner else BAD,
-                         fg="#fff", font=("Segoe UI", 7), padx=4)
-        badge.place(x=4, y=4)
+        # Account label as a bottom bar. This is the fallback for the text tile (no
+        # gradient/alpha in Tk); when a cover image loads, the name is baked into the
+        # image (gradient + dot) and this bar is hidden. Account-colored text doubles
+        # as the color code.
+        bar = tk.Label(card, text=f"  {label_text}", anchor="w", bg="#0b0f14",
+                       fg=_hex(rgb), font=("Segoe UI", 9, "bold"))
+        bar.place(relx=0, rely=1.0, anchor="sw", relwidth=1)
 
-        for w in (card, body, badge):
+        for w in (card, body, bar):
             w.bind("<Button-1>", lambda _e, gm=game: self.play(gm))
 
         self.cards.append(card)
         if HAVE_PIL:
-            self.pool.submit(self._load_cover, game, body)
+            self.pool.submit(self._load_cover, game, body, label_text, rgb, bar)
 
-    def _load_cover(self, game, label):
+    def _load_cover(self, game, label, name, rgb, bar):
         try:
             data = covers.cover_bytes(game.appid)
             if not data:
                 return
             img = Image.open(io.BytesIO(data)).convert("RGB")
             img = _fit_portrait(img, CARD_W, CARD_H)
+            img = _draw_account_badge(img, name, rgb)
             photo = ImageTk.PhotoImage(img)
         except Exception:
             return
@@ -318,6 +480,8 @@ class App(tk.Tk):
             if label.winfo_exists():
                 self.images[game.appid] = photo
                 label.config(image=photo, text="")
+                if bar.winfo_exists():
+                    bar.place_forget()   # name is now baked into the cover image
         self.after(0, apply)
 
     # --------------------------------------------------------------- play
