@@ -28,21 +28,28 @@ try:
 except ImportError:
     HAVE_PIL = False
 
-# Steam-ish palette. Background shades go PANEL (darkest) < BG < CARD; TEXT and
-# the accent/status colors are all chosen to stay readable on those backgrounds.
-BG = "#1b2838"
-PANEL = "#16202d"
-CARD = "#2a3f5a"
-ACCENT = "#66c0f4"
-ACCENT2 = "#417a9b"
-ACCENT2_HOVER = "#4f8fb3"   # button hover — lighter blue, white text still reads
-TEXT = "#c7d5e0"
-BAD = "#c94f4f"
-BAD_HOVER = "#b04545"       # darker red on hover so white text stays high-contrast
-GOOD = "#5ba32b"
-WARN = "#d9a441"            # amber: "needs attention" (account needs re-login)
-MUTED = "#8aa0b6"           # secondary text / placeholder, legible on dark panels
-DIM = "#33414f"            # inactive control fill (disabled button / toggle OFF)
+# Proton-Dark palette (see ui_refresh/proton_dark/DESIGN.md). Tonal layering goes
+# BASE (darkest, inputs) < BG (canvas) < PANEL (sidebar/footer) < CARD < CARD_HOVER;
+# 1px OUTLINE borders define sections instead of shadows. Text/status colors are
+# chosen to stay readable on those backgrounds.
+BG = "#0b1326"            # background — the deep ink canvas
+PANEL = "#131b2e"         # surface-container-low — sidebar, topbar chrome, footer
+CARD = "#171f33"          # surface-container — cards / tiles
+CARD_HOVER = "#222a3d"    # surface-container-high — hover / active nav
+BASE = "#060e20"          # surface-container-lowest — input fields
+ACCENT = "#adc6ff"        # primary — accent text, active nav, focus
+ACCENT2 = "#4d8eff"       # primary-container — solid buttons / account chip
+ACCENT2_HOVER = "#6ba0ff"
+TEXT = "#dae2fd"          # on-surface — primary text
+MUTED = "#c2c6d6"         # on-surface-variant — secondary text / placeholder
+OUTLINE = "#424754"       # outline-variant — 1px borders
+DIM = "#2d3449"           # inactive control fill (toggle OFF / disabled button)
+BAD = "#ef4444"           # error
+BAD_HOVER = "#dc2626"
+GOOD = "#10b981"          # success / online / installed
+WARN = "#d9a441"          # amber: account needs re-login
+
+APP_VERSION = "proton-dark"
 
 CARD_W, CARD_H = 150, 225
 
@@ -80,6 +87,14 @@ _UNMAPPED_COLOR = (201, 79, 79)   # BAD red
 
 def _hex(rgb: tuple) -> str:
     return "#%02x%02x%02x" % rgb
+
+
+def _pill(cv, x0, y0, x1, y1, fill):
+    """Draw a filled rounded pill (two circle caps + a rectangle) on a Canvas."""
+    r = (y1 - y0) / 2
+    cv.create_oval(x0, y0, x0 + 2 * r, y1, fill=fill, outline="")
+    cv.create_oval(x1 - 2 * r, y0, x1, y1, fill=fill, outline="")
+    cv.create_rectangle(x0 + r, y0, x1 - r, y0 + 2 * r, fill=fill, outline="")
 
 
 # TrueType fonts give crisp anti-aliased text; try the platform's, fall back to
@@ -171,8 +186,8 @@ class App(tk.Tk):
         super().__init__()
         self.title("SteamSwitch")
         self.configure(bg=BG)
-        self.geometry("1000x700")
-        self.minsize(640, 480)
+        self.geometry("1100x720")
+        self.minsize(820, 520)
         self._set_app_icon()
 
         self.games: list = []
@@ -182,6 +197,8 @@ class App(tk.Tk):
         self.images: dict[int, object] = {}   # keep PhotoImage refs alive
         self.cards: list[tk.Widget] = []
         self._cols = 0
+        self._view = "library"     # which content pane is showing
+        self._nav: dict = {}       # key -> (row, accent-bar, label) for sidebar nav
         self._launching = False   # guard: only one account-switch/launch at a time
         self._cancel = threading.Event()  # set to abort an in-progress launch
         self.pool = ThreadPoolExecutor(max_workers=6)
@@ -206,8 +223,33 @@ class App(tk.Tk):
 
     # ------------------------------------------------------------------ UI
     def _build_chrome(self):
-        bar = tk.Frame(self, bg=PANEL)
-        bar.pack(fill="x")
+        """Top-level layout: a full-height sidebar on the left, and a right column
+        holding the topbar (search/controls), the swappable content pane, and the
+        footer status bar."""
+        main = tk.Frame(self, bg=BG)
+        main.pack(fill="both", expand=True)
+
+        self._build_sidebar(main)
+
+        right = tk.Frame(main, bg=BG)
+        right.pack(side="left", fill="both", expand=True)
+
+        self._build_topbar(right)
+        self._build_footer(right)        # side=bottom, before content claims the middle
+
+        self.content = tk.Frame(right, bg=BG)
+        self.content.pack(fill="both", expand=True)
+
+        if not HAVE_PIL:
+            self.set_status("Tip: covers appear when Pillow is installed "
+                            "(it's bundled in the .exe build).")
+        self.show_view("library")
+
+    # ----- sidebar -----------------------------------------------------
+    def _build_sidebar(self, parent):
+        sb = tk.Frame(parent, bg=PANEL, width=210)
+        sb.pack(side="left", fill="y")
+        sb.pack_propagate(False)
 
         # Brand: the SteamSwitch mark + wordmark. Falls back to text alone if the
         # logo asset isn't present (e.g. assets/make_icon.py hasn't been run).
@@ -217,92 +259,155 @@ class App(tk.Tk):
                 self._logo_img = tk.PhotoImage(file=str(_asset("steamswitch_28.png")))
         except Exception:
             self._logo_img = None
-        tk.Label(bar, text=" SteamSwitch", image=self._logo_img, compound="left",
-                 bg=PANEL, fg="#fff", font=("Segoe UI", 13, "bold")
-                 ).pack(side="left", padx=14, pady=8)
+        brand = tk.Frame(sb, bg=PANEL)
+        brand.pack(fill="x", padx=16, pady=(18, 22))
+        tk.Label(brand, text="  SteamSwitch", image=self._logo_img, compound="left",
+                 bg=PANEL, fg="#ffffff", font=("Segoe UI", 13, "bold")).pack(side="left")
 
-        self.account_lbl = tk.Label(bar, text="…", bg=PANEL, fg=ACCENT,
-                                    font=("Segoe UI", 10))
-        self.account_lbl.pack(side="left", padx=10)
+        # Primary navigation. "Accounts" isn't a nav item — it's reached via the
+        # account chip pinned at the bottom of the sidebar.
+        self._add_nav(sb, "library", "▦   Library")
+        self._add_nav(sb, "settings", "⚙   Settings")
 
-        self.accounts_btn = tk.Button(bar, text="Accounts", command=self.open_accounts,
-                                      bg=ACCENT2, fg="#fff", activebackground=ACCENT2_HOVER,
-                                      activeforeground="#fff", relief="flat", padx=10)
-        self.accounts_btn.pack(side="right", padx=12)
+        self._build_account_chip(sb)
 
-        # Cancel button: abort a launch that's underway (e.g. wrong game picked).
-        # Starts dim/disabled (no launch yet); _set_cancel_enabled() turns it red
-        # + clickable during a launch. disabledforeground keeps the label readable
-        # while disabled (Tk ignores `fg` for disabled buttons).
-        self.cancel_btn = tk.Button(bar, text="Stop launch", command=self.cancel_launch,
-                                    bg=DIM, fg="#fff", activebackground=BAD_HOVER,
-                                    activeforeground="#fff", disabledforeground=MUTED,
-                                    relief="flat", padx=10, state="disabled")
-        self.cancel_btn.pack(side="right", padx=4)
+    def _add_nav(self, parent, key, text):
+        row = tk.Frame(parent, bg=PANEL, cursor="hand2")
+        row.pack(fill="x", padx=10, pady=2)
+        bar = tk.Frame(row, bg=PANEL, width=3)         # left accent bar when active
+        bar.pack(side="left", fill="y")
+        lbl = tk.Label(row, text=text, bg=PANEL, fg=MUTED, font=("Segoe UI", 11),
+                       anchor="w", padx=12, pady=9)
+        lbl.pack(side="left", fill="x", expand=True)
+        self._nav[key] = (row, bar, lbl)
+        for w in (row, lbl):
+            w.bind("<Button-1>", lambda _e, k=key: self.show_view(k))
+            w.bind("<Enter>", lambda _e, k=key: self._nav_hover(k, True))
+            w.bind("<Leave>", lambda _e, k=key: self._nav_hover(k, False))
 
-        # ttk.Checkbutton, not tk.Checkbutton: it uses the OS-native indicator — a
-        # white box with a crisp dark tick drawn by Windows, independent of the
-        # label colour. (A classic checkbutton draws the tick in `fg`, which has to
-        # be light for the label on the dark bar, so the tick was invisible on
-        # white.) The style keeps the label text/background on-theme.
-        self.offline_var = tk.BooleanVar(value=False)
-        ck_style = ttk.Style(self)
-        ck_style.configure("Offline.TCheckbutton", background=PANEL, foreground=TEXT)
-        ck_style.map("Offline.TCheckbutton",
-                     background=[("active", PANEL), ("selected", PANEL),
-                                 ("pressed", PANEL)],
-                     foreground=[("active", ACCENT)])
-        ttk.Checkbutton(bar, text="Launch offline", variable=self.offline_var,
-                        style="Offline.TCheckbutton", takefocus=False
-                        ).pack(side="right", padx=4)
+    def _nav_hover(self, key, entering):
+        if key == self._view:
+            return
+        row, _bar, lbl = self._nav[key]
+        bg = CARD_HOVER if entering else PANEL
+        row.config(bg=bg)
+        lbl.config(bg=bg, fg=TEXT if entering else MUTED)
 
-        # search (+ filter dropdown to its right)
-        sb = tk.Frame(self, bg=BG)
-        sb.pack(fill="x", padx=16, pady=(12, 4))
+    def _update_nav(self):
+        for key, (row, bar, lbl) in self._nav.items():
+            active = (key == self._view)
+            row.config(bg=CARD_HOVER if active else PANEL)
+            bar.config(bg=ACCENT if active else PANEL)
+            lbl.config(bg=CARD_HOVER if active else PANEL,
+                       fg=TEXT if active else MUTED)
+
+    def _build_account_chip(self, parent):
+        """The current-account block pinned bottom-left; clicking it opens Accounts."""
+        chip = tk.Frame(parent, bg=ACCENT2, cursor="hand2")
+        chip.pack(side="bottom", fill="x", padx=12, pady=12)
+        self.chip_avatar = tk.Label(chip, text="", bg="#2a3a6a", fg="#ffffff",
+                                    width=4, height=2, font=("Segoe UI", 10, "bold"))
+        self.chip_avatar.pack(side="left", padx=8, pady=8)
+        txt = tk.Frame(chip, bg=ACCENT2)
+        txt.pack(side="left", fill="x", expand=True)
+        self.chip_count = tk.Label(txt, text="ACCOUNTS", bg=ACCENT2, fg="#d8e2ff",
+                                   font=("Segoe UI", 7, "bold"), anchor="w")
+        self.chip_count.pack(anchor="w")
+        self.chip_name = tk.Label(txt, text="…", bg=ACCENT2, fg="#ffffff",
+                                  font=("Segoe UI", 10, "bold"), anchor="w")
+        self.chip_name.pack(anchor="w")
+        for w in (chip, txt, self.chip_avatar, self.chip_count, self.chip_name):
+            w.bind("<Button-1>", lambda _e: self.show_view("accounts"))
+
+    # ----- topbar (search + controls) ---------------------------------
+    def _build_topbar(self, parent):
+        bar = tk.Frame(parent, bg=BG)
+        bar.pack(fill="x", padx=24, pady=(16, 6))
+
+        # Search field: a BASE-filled box with a 1px outline and a leading glyph.
+        sframe = tk.Frame(bar, bg=BASE, highlightthickness=1,
+                          highlightbackground=OUTLINE, highlightcolor=ACCENT)
+        sframe.pack(side="left")
+        tk.Label(sframe, text="🔍", bg=BASE, fg=MUTED).pack(side="left", padx=(8, 0))
+        self.search_var = tk.StringVar()
+        self.search_var.trace_add("write", lambda *_: self._on_search())
+        e = tk.Entry(sframe, textvariable=self.search_var, bg=BASE, fg=TEXT,
+                     insertbackground=TEXT, relief="flat", width=38)
+        e.pack(side="left", ipady=6, padx=(4, 8))
+        self._placeholder(e, "Search games in library…")
+
+        self._make_tool_btn(bar, "⟳  Refresh", self.refresh_all).pack(side="left", padx=(10, 0))
 
         # Filter ▾ : sort + filter-by-account. Search is unchanged; this only adds
         # ordering/filtering on top of the search results (see render_grid).
         self.sort_var = tk.StringVar(value="az")
         self.filter_var = tk.StringVar(value="all")
-        fb = tk.Menubutton(sb, text="Filter ▾", bg=ACCENT2, fg="#fff",
-                           activebackground=ACCENT2_HOVER, activeforeground="#fff",
-                           relief="flat", padx=12)
+        fb = tk.Menubutton(bar, text="≡  Filter", bg=CARD, fg=TEXT,
+                           activebackground=CARD_HOVER, activeforeground=TEXT,
+                           relief="flat", padx=12, pady=4,
+                           highlightthickness=1, highlightbackground=OUTLINE)
         self.filter_menu = tk.Menu(fb, tearoff=0, bg=PANEL, fg=TEXT,
                                    activebackground=ACCENT2, activeforeground="#fff",
                                    selectcolor=ACCENT, bd=0)
         fb.config(menu=self.filter_menu)
-        fb.pack(side="right", padx=(8, 0))
+        fb.pack(side="left", padx=(10, 0))
         self._build_filter_menu()
 
-        self.search_var = tk.StringVar()
-        self.search_var.trace_add("write", lambda *_: self.render_grid())
-        e = tk.Entry(sb, textvariable=self.search_var, bg=PANEL, fg=TEXT,
-                     insertbackground=TEXT, relief="flat")
-        e.pack(side="left", fill="x", expand=True, ipady=5)
-        e.insert(0, "")
-        self._placeholder(e, "Filter games…")
+        # Stop launch (right): abort a launch that's underway (e.g. wrong game).
+        # Starts dim/disabled; _set_cancel_enabled() turns it red + clickable.
+        self.cancel_btn = tk.Button(bar, text="⊘  Stop launch", command=self.cancel_launch,
+                                    bg=DIM, fg="#fff", activebackground=BAD_HOVER,
+                                    activeforeground="#fff", disabledforeground=MUTED,
+                                    relief="flat", padx=12, pady=4, state="disabled")
+        self.cancel_btn.pack(side="right")
 
-        # scrollable grid
-        wrap = tk.Frame(self, bg=BG)
-        wrap.pack(fill="both", expand=True, padx=8)
-        self.canvas = tk.Canvas(wrap, bg=BG, highlightthickness=0)
-        vsb = ttk.Scrollbar(wrap, orient="vertical", command=self.canvas.yview)
-        self.canvas.configure(yscrollcommand=vsb.set)
-        vsb.pack(side="right", fill="y")
-        self.canvas.pack(side="left", fill="both", expand=True)
-        self.grid_frame = tk.Frame(self.canvas, bg=BG)
-        self._win = self.canvas.create_window((0, 0), window=self.grid_frame, anchor="nw")
-        self.grid_frame.bind("<Configure>",
-                             lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
-        self.canvas.bind("<Configure>", self._on_canvas_resize)
-        self._bind_scroll()
+        # Launch-offline pill toggle (right of-centre). Keeps offline_var so play()
+        # is unchanged.
+        self.offline_var = tk.BooleanVar(value=False)
+        self._make_toggle(bar, self.offline_var, "LAUNCH OFFLINE").pack(side="right", padx=(0, 14))
 
-        # status bar
-        self.status = tk.Label(self, text="", bg=PANEL, fg=TEXT, anchor="w")
-        self.status.pack(fill="x", side="bottom", ipady=4)
-        if not HAVE_PIL:
-            self.set_status("Tip: covers appear when Pillow is installed "
-                            "(it's bundled in the .exe build).")
+    def _make_tool_btn(self, parent, text, cmd):
+        """Secondary button: CARD fill, 1px outline, on-surface text."""
+        return tk.Button(parent, text=text, command=cmd, bg=CARD, fg=TEXT,
+                         activebackground=CARD_HOVER, activeforeground=TEXT,
+                         relief="flat", padx=12, pady=4,
+                         highlightthickness=1, highlightbackground=OUTLINE)
+
+    def _make_toggle(self, parent, var, label):
+        """A small Canvas-drawn pill switch bound to a BooleanVar (Tk has no native
+        toggle). Blue + knob-right when on, dim + knob-left when off."""
+        f = tk.Frame(parent, bg=BG)
+        tk.Label(f, text=label, bg=BG, fg=MUTED,
+                 font=("Segoe UI", 9, "bold")).pack(side="left", padx=(0, 8))
+        cv = tk.Canvas(f, width=42, height=20, bg=BG, highlightthickness=0, cursor="hand2")
+        cv.pack(side="left")
+
+        def draw():
+            cv.delete("all")
+            on = var.get()
+            _pill(cv, 1, 1, 41, 19, ACCENT2 if on else DIM)
+            kx = 31 if on else 11
+            cv.create_oval(kx - 7, 3, kx + 7, 17, fill="#ffffff", outline="")
+
+        def toggle(_=None):
+            var.set(not var.get())
+            draw()
+
+        cv.bind("<Button-1>", toggle)
+        draw()
+        return f
+
+    # ----- footer ------------------------------------------------------
+    def _build_footer(self, parent):
+        footer = tk.Frame(parent, bg=PANEL)
+        footer.pack(side="bottom", fill="x")
+        self.status_dot = tk.Label(footer, text="●", bg=PANEL, fg=GOOD,
+                                   font=("Segoe UI", 8))
+        self.status_dot.pack(side="left", padx=(24, 6), pady=5)
+        self.status = tk.Label(footer, text="", bg=PANEL, fg=TEXT, anchor="w")
+        self.status.pack(side="left")
+        tk.Label(footer, text=APP_VERSION, bg=PANEL, fg=MUTED,
+                 font=("Segoe UI", 8, "italic")).pack(side="right", padx=24)
 
     def _placeholder(self, entry, text):
         def on_focus_in(_):
@@ -317,8 +422,11 @@ class App(tk.Tk):
 
     def _bind_scroll(self):
         def on_wheel(e):
+            c = getattr(self, "canvas", None)
+            if not c or not c.winfo_exists():
+                return
             delta = -1 * (e.delta // 120) if e.delta else (1 if e.num == 5 else -1)
-            self.canvas.yview_scroll(delta, "units")
+            c.yview_scroll(delta, "units")
         self.canvas.bind_all("<MouseWheel>", on_wheel)
         self.canvas.bind_all("<Button-4>", on_wheel)
         self.canvas.bind_all("<Button-5>", on_wheel)
@@ -333,12 +441,32 @@ class App(tk.Tk):
     def set_status(self, text, kind=""):
         color = {"bad": BAD, "good": GOOD}.get(kind, TEXT)
         self.status.config(text=text, fg=color)
+        if hasattr(self, "status_dot"):
+            self.status_dot.config(fg={"bad": BAD}.get(kind, GOOD))
+
+    def _on_search(self):
+        if self._view == "library":
+            self.render_grid()
 
     def _set_cancel_enabled(self, on: bool):
         """Stop-launch button: red + clickable while a launch runs, dim otherwise
         (a permanently-red disabled button looks broken and its text goes dark)."""
         self.cancel_btn.config(state="normal" if on else "disabled",
                                bg=BAD if on else DIM)
+
+    # ----- view switching ---------------------------------------------
+    def show_view(self, key):
+        self._view = key
+        self._update_nav()
+        for w in self.content.winfo_children():
+            w.destroy()
+        self.cards.clear()
+        if key == "library":
+            self._build_library()
+        elif key == "accounts":
+            self._build_accounts()
+        elif key == "settings":
+            self._build_settings()
 
     # -------------------------------------------------------------- data
     def refresh_all(self):
@@ -359,12 +487,23 @@ class App(tk.Tk):
                     and self.filter_var.get() not in {a.steamid64 for a in self.accounts}):
                 self.filter_var.set("all")
             self._build_filter_menu()
-        self.account_lbl.config(
-            text=f"Logged in: {self.current_account}" if self.current_account
-            else "No active account")
-        if hasattr(self, "accounts_btn"):
-            self.accounts_btn.config(
-                text=f"Accounts ({len(self.accounts)})" if self.accounts else "Accounts")
+        self._update_account_chip()
+        # If the Accounts view is showing, rebuild it so badges/counts stay current.
+        if self._view == "accounts":
+            self.show_view("accounts")
+
+    def _update_account_chip(self):
+        if not hasattr(self, "chip_name"):
+            return
+        name = self.current_account or "No account"
+        self.chip_count.config(
+            text=f"ACCOUNTS ({len(self.accounts)})" if self.accounts else "ACCOUNTS")
+        self.chip_name.config(text=name)
+        sid = next((a.steamid64 for a in self.accounts
+                    if a.account_name == self.current_account
+                    or a.persona_name == self.current_account), None)
+        self.chip_avatar.config(text=(name[:2].upper() if name else ""),
+                                bg=_hex(self._color_for(sid)) if sid else "#2a3a6a")
 
     def reload_games(self):
         self.games = games.installed_games()
@@ -407,14 +546,44 @@ class App(tk.Tk):
         m.add_radiobutton(label="Unmapped", variable=self.filter_var, value="unmapped",
                           command=self.render_grid)
 
+    # ----------------------------------------------------------- library
+    def _build_library(self):
+        head = tk.Frame(self.content, bg=BG)
+        head.pack(fill="x", padx=24, pady=(6, 8))
+        tk.Label(head, text="MY GAMES", bg=BG, fg=MUTED,
+                 font=("Segoe UI", 10, "bold")).pack(side="left")
+        self.count_lbl = tk.Label(head, text="", bg=BG, fg=MUTED,
+                                  font=("Segoe UI", 9))
+        self.count_lbl.pack(side="right")
+
+        wrap = tk.Frame(self.content, bg=BG)
+        wrap.pack(fill="both", expand=True, padx=16)
+        self.canvas = tk.Canvas(wrap, bg=BG, highlightthickness=0)
+        vsb = ttk.Scrollbar(wrap, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=vsb.set)
+        vsb.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.grid_frame = tk.Frame(self.canvas, bg=BG)
+        self._win = self.canvas.create_window((0, 0), window=self.grid_frame, anchor="nw")
+        self.grid_frame.bind("<Configure>",
+                             lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+        self.canvas.bind("<Configure>", self._on_canvas_resize)
+        self._bind_scroll()
+        self._cols = 0
+        self.render_grid()
+
     # ------------------------------------------------------------- render
     def render_grid(self):
+        # Only the library view owns a grid; ignore stray calls from other views.
+        if self._view != "library" or not getattr(self, "grid_frame", None) \
+                or not self.grid_frame.winfo_exists():
+            return
         for c in self.cards:
             c.destroy()
         self.cards.clear()
         cols = max(1, self._cols or 5)
         flt = self.search_var.get().strip().lower()
-        if flt == "filter games…":
+        if flt == "search games in library…":
             flt = ""
         visible = [g for g in self.games if flt in g.name.lower()]
 
@@ -429,6 +598,10 @@ class App(tk.Tk):
         reverse = hasattr(self, "sort_var") and self.sort_var.get() == "za"
         visible.sort(key=lambda g: g.name.lower(), reverse=reverse)
 
+        if hasattr(self, "count_lbl") and self.count_lbl.winfo_exists():
+            self.count_lbl.config(
+                text=f"Showing {len(visible)} of {len(self.games)} games")
+
         for i, g in enumerate(visible):
             self._make_card(g, i // cols, i % cols)
 
@@ -439,7 +612,7 @@ class App(tk.Tk):
         rgb = self._color_for(owner_sid)
 
         card = tk.Frame(self.grid_frame, bg=CARD, width=CARD_W, height=CARD_H,
-                        highlightthickness=1, highlightbackground="#000",
+                        highlightthickness=1, highlightbackground=OUTLINE,
                         cursor="hand2")
         card.grid(row=row, column=col, padx=7, pady=7)
         card.grid_propagate(False)
@@ -534,10 +707,99 @@ class App(tk.Tk):
             self._set_cancel_enabled(False)
 
     # ----------------------------------------------------------- accounts
-    def open_accounts(self):
-        AccountsWindow(self)
+    def _build_accounts(self):
+        head = tk.Frame(self.content, bg=BG)
+        head.pack(fill="x", padx=24, pady=(6, 2))
+        tk.Label(head, text="MANAGE ACCOUNTS", bg=BG, fg=MUTED,
+                 font=("Segoe UI", 10, "bold")).pack(anchor="w")
+        tk.Label(self.content, bg=BG, fg=MUTED, justify="left", anchor="w",
+                 text="Your saved Steam accounts. Pick a game in Library to switch to "
+                      "the account that owns it; add another below.",
+                 font=("Segoe UI", 9)).pack(fill="x", padx=24, pady=(0, 8))
 
-    def add_account(self, window=None):
+        grid = tk.Frame(self.content, bg=BG)
+        grid.pack(fill="both", expand=True, padx=16)
+        grid.columnconfigure(0, weight=1, uniform="acc")
+        grid.columnconfigure(1, weight=1, uniform="acc")
+
+        # how many installed games currently map to each account
+        counts: dict[str, int] = {}
+        for g in self.games:
+            sid = accounts.account_for_game(g.appid, self.accounts)
+            if sid:
+                counts[sid] = counts.get(sid, 0) + 1
+
+        # Cell 0 is the "add account" card; the rest are the accounts.
+        self._add_account_card(grid, 0, 0)
+        for idx, acc in enumerate(self.accounts, start=1):
+            self._account_card(grid, acc, counts.get(acc.steamid64, 0),
+                               idx // 2, idx % 2)
+
+        if not self.accounts:
+            tk.Label(grid, bg=BG, fg=MUTED, wraplength=380, justify="left",
+                     text="No accounts found yet. Click “+ Add New Account” and log "
+                          "in with “Remember me” checked.").grid(row=0, column=1,
+                                                                 sticky="w", padx=10)
+
+    def _add_account_card(self, parent, r, c):
+        card = tk.Frame(parent, bg=BG, highlightthickness=1,
+                        highlightbackground=OUTLINE, cursor="hand2", height=150)
+        card.grid(row=r, column=c, sticky="nsew", padx=8, pady=8)
+        card.grid_propagate(False)
+        inner = tk.Frame(card, bg=BG)
+        inner.place(relx=0.5, rely=0.5, anchor="center")
+        tk.Label(inner, text="＋", bg=BG, fg=ACCENT,
+                 font=("Segoe UI", 20, "bold")).pack()
+        tk.Label(inner, text="Add New Account", bg=BG, fg=TEXT,
+                 font=("Segoe UI", 11, "bold")).pack()
+        tk.Label(inner, text="Steam Account", bg=BG, fg=MUTED,
+                 font=("Segoe UI", 8)).pack()
+        for w in (card, inner, *inner.winfo_children()):
+            w.bind("<Button-1>", lambda _e: self.add_account())
+
+    def _account_card(self, parent, acc, game_count, r, c):
+        is_current = acc.account_name == self.current_account \
+            or acc.persona_name == self.current_account
+        border = ACCENT if is_current else OUTLINE
+        card = tk.Frame(parent, bg=CARD, highlightthickness=1,
+                        highlightbackground=border, height=150)
+        card.grid(row=r, column=c, sticky="nsew", padx=8, pady=8)
+        card.grid_propagate(False)
+
+        top = tk.Frame(card, bg=CARD)
+        top.pack(fill="x", padx=12, pady=(12, 4))
+
+        rgb = self._color_for(acc.steamid64)
+        tk.Label(top, text=acc.persona_name[:2].upper(), bg=_hex(rgb), fg="#0b1326",
+                 width=4, height=2, font=("Segoe UI", 11, "bold")).pack(side="left")
+
+        info = tk.Frame(top, bg=CARD)
+        info.pack(side="left", fill="x", expand=True, padx=10)
+        tk.Label(info, text=acc.persona_name, bg=CARD, fg="#ffffff",
+                 font=("Segoe UI", 11, "bold"), anchor="w").pack(anchor="w")
+        tk.Label(info, text=acc.account_name, bg=CARD, fg=MUTED,
+                 font=("Segoe UI", 8), anchor="w").pack(anchor="w")
+
+        # Status badge: LOGGED IN for the active account, else switch-readiness.
+        if is_current:
+            badge, color = "● LOGGED IN", ACCENT
+        else:
+            ready, _why = switcher.can_autologin(acc.account_name)
+            badge = "✓ ready" if ready else "⚠ needs login"
+            color = GOOD if ready else WARN
+        tk.Label(top, text=badge, bg=CARD, fg=color,
+                 font=("Segoe UI", 8, "bold")).pack(side="right", anchor="n")
+
+        tk.Frame(card, bg=OUTLINE, height=1).pack(fill="x", padx=12, pady=(6, 0))
+        tk.Label(card, text=f"{game_count} installed game"
+                            f"{'' if game_count == 1 else 's'} mapped here",
+                 bg=CARD, fg=TEXT, font=("Segoe UI", 9), anchor="w"
+                 ).pack(fill="x", padx=12, pady=(8, 12))
+
+    def open_accounts(self):
+        self.show_view("accounts")
+
+    def add_account(self):
         """Restart Steam to its login screen so the user can add another account.
         Steam must restart for the chooser ('+ Add an account') to appear, so we
         confirm first, then do it off the UI thread (shutdown polls for a while)."""
@@ -550,8 +812,6 @@ class App(tk.Tk):
                 "another account.\n\nLog in with “Remember me” checked so "
                 "SteamSwitch can switch to it later.\n\nContinue?"):
             return
-        if window is not None and window.winfo_exists():
-            window.destroy()
         self.set_status("Closing Steam and opening the login screen…")
         self.pool.submit(self._add_account_worker)
 
@@ -575,77 +835,75 @@ class App(tk.Tk):
                     "Couldn't close Steam — close it manually and try again.", "bad")
         self.after(0, done)
 
+    # ----------------------------------------------------------- settings
+    def _build_settings(self):
+        head = tk.Frame(self.content, bg=BG)
+        head.pack(fill="x", padx=24, pady=(6, 2))
+        tk.Label(head, text="SETTINGS", bg=BG, fg=MUTED,
+                 font=("Segoe UI", 10, "bold")).pack(anchor="w")
+        tk.Label(self.content, bg=BG, fg=MUTED, anchor="w",
+                 text="Current configuration and detected Steam state.",
+                 font=("Segoe UI", 9)).pack(fill="x", padx=24, pady=(0, 10))
+
+        body = tk.Frame(self.content, bg=BG)
+        body.pack(fill="both", expand=True, padx=24)
+
+        # --- Detected state (read-only) ---
+        root = steam_paths.steam_root()
+        self._settings_section(body, "Steam")
+        self._settings_row(body, "Install path", str(root) if root else "Not found",
+                           good=bool(root))
+        self._settings_row(body, "Accounts detected", str(len(self.accounts)))
+        self._settings_row(body, "Active account", self.current_account or "None")
+        self._settings_row(body, "Installed games", str(len(self.games)))
+        self._settings_row(body, "Cover art (Pillow)",
+                           "Available" if HAVE_PIL else "Text tiles only",
+                           good=HAVE_PIL)
+
+        # --- Launch options (existing functions) ---
+        self._settings_section(body, "Launch")
+        opt = tk.Frame(body, bg=BG)
+        opt.pack(fill="x", pady=4)
+        tk.Label(opt, text="Launch games offline", bg=BG, fg=TEXT,
+                 font=("Segoe UI", 10)).pack(side="left")
+        # Same offline_var the topbar toggle drives — this just mirrors it.
+        self._make_toggle(opt, self.offline_var, "").pack(side="right")
+
+        # --- Language (stub: English only for now; Arabic/RTL is a later task) ---
+        self._settings_section(body, "Language")
+        lang = tk.Frame(body, bg=BG)
+        lang.pack(fill="x", pady=4)
+        tk.Label(lang, text="Interface language", bg=BG, fg=TEXT,
+                 font=("Segoe UI", 10)).pack(side="left")
+        self.lang_var = tk.StringVar(value="English")
+        om = tk.OptionMenu(lang, self.lang_var, "English")
+        om.config(bg=CARD, fg=TEXT, activebackground=CARD_HOVER, activeforeground=TEXT,
+                  relief="flat", highlightthickness=1, highlightbackground=OUTLINE,
+                  state="disabled", disabledforeground=MUTED)
+        om["menu"].config(bg=PANEL, fg=TEXT)
+        om.pack(side="right")
+        tk.Label(body, text="Arabic (RTL) is planned for a future update.",
+                 bg=BG, fg=MUTED, font=("Segoe UI", 8, "italic"), anchor="w"
+                 ).pack(fill="x", pady=(2, 0))
+
+    def _settings_section(self, parent, title):
+        tk.Label(parent, text=title.upper(), bg=BG, fg=ACCENT,
+                 font=("Segoe UI", 9, "bold"), anchor="w"
+                 ).pack(fill="x", pady=(14, 2))
+        tk.Frame(parent, bg=OUTLINE, height=1).pack(fill="x")
+
+    def _settings_row(self, parent, key, value, good=None):
+        row = tk.Frame(parent, bg=BG)
+        row.pack(fill="x", pady=3)
+        tk.Label(row, text=key, bg=BG, fg=MUTED,
+                 font=("Segoe UI", 10), anchor="w").pack(side="left")
+        color = TEXT if good is None else (GOOD if good else BAD)
+        tk.Label(row, text=value, bg=BG, fg=color,
+                 font=("Segoe UI", 10), anchor="e").pack(side="right")
+
     def _on_close(self):
         self.pool.shutdown(wait=False, cancel_futures=True)
         self.destroy()
-
-
-class AccountsWindow(tk.Toplevel):
-    def __init__(self, app: App):
-        super().__init__(app)
-        self.app = app
-        self.title("Accounts")
-        self.configure(bg=PANEL)
-        self.geometry("440x560")
-        self.transient(app)
-
-        tk.Label(self, text="Accounts", bg=PANEL, fg="#fff",
-                 font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=16, pady=(14, 4))
-        tk.Label(self, bg=PANEL, fg="#9fb3c8", justify="left", wraplength=400,
-                 text="SteamSwitch can switch to any account you've logged into "
-                      "Steam with “Remember me”. Add another below; it logs in "
-                      "through Steam, then appears here ready to use."
-                 ).pack(anchor="w", padx=16)
-
-        # Footer (always visible) with the Add-account action.
-        footer = tk.Frame(self, bg=PANEL)
-        footer.pack(side="bottom", fill="x", padx=12, pady=(0, 12))
-        tk.Button(footer, text="+ Add an account",
-                  command=lambda: app.add_account(self),
-                  bg=ACCENT2, fg="#fff", activebackground=ACCENT2_HOVER,
-                  activeforeground="#fff", relief="flat", padx=12, pady=6
-                  ).pack(fill="x")
-
-        body = tk.Frame(self, bg=PANEL)
-        body.pack(fill="both", expand=True, padx=12, pady=10)
-
-        if not app.accounts:
-            tk.Label(body, bg=PANEL, fg=MUTED, wraplength=400, justify="left",
-                     text="No accounts found yet. Click “+ Add an account” below "
-                          "and log in with “Remember me” checked."
-                     ).pack(anchor="w")
-            return
-
-        # how many installed games currently map to each account
-        counts: dict[str, int] = {}
-        for g in app.games:
-            sid = accounts.account_for_game(g.appid, app.accounts)
-            if sid:
-                counts[sid] = counts.get(sid, 0) + 1
-
-        for acc in app.accounts:
-            self._account_row(body, acc, counts.get(acc.steamid64, 0))
-
-    def _account_row(self, parent, acc, game_count):
-        box = tk.Frame(parent, bg=BG, highlightthickness=1, highlightbackground="#000")
-        box.pack(fill="x", pady=6)
-
-        # Header line: persona name (left) + switch-readiness badge (right).
-        top = tk.Frame(box, bg=BG)
-        top.pack(fill="x", padx=10, pady=(8, 0))
-        tk.Label(top, text=acc.persona_name, bg=BG, fg=ACCENT,
-                 font=("Segoe UI", 10, "bold")).pack(side="left")
-        ready, _why = switcher.can_autologin(acc.account_name)
-        tk.Label(top, text="✓ ready" if ready else "⚠ needs login",
-                 bg=BG, fg=GOOD if ready else WARN,
-                 font=("Segoe UI", 8, "bold")).pack(side="right")
-
-        tk.Label(box, text=f"{acc.account_name} · {acc.steamid64}", bg=BG,
-                 fg=MUTED, font=("Segoe UI", 8)).pack(anchor="w", padx=10)
-        tk.Label(box, text=f"{game_count} installed game"
-                           f"{'' if game_count == 1 else 's'} mapped here",
-                 bg=BG, fg=TEXT, font=("Segoe UI", 8)).pack(anchor="w", padx=10,
-                                                            pady=(2, 8))
 
 
 def main():

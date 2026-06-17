@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SteamSwitch</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">⇅</div>
+        <span class="brand-name">SteamSwitch</span>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item active" data-view="library">
+          <span class="nav-ico">▦</span> Library
+        </button>
+        <button class="nav-item" data-view="settings">
+          <span class="nav-ico">⚙</span> Settings
+        </button>
+      </nav>
+
+      <button class="account-chip" id="account-chip" title="Manage accounts">
+        <span class="chip-avatar" id="chip-avatar">··</span>
+        <span class="chip-text">
+          <span class="chip-count" id="chip-count">ACCOUNTS</span>
+          <span class="chip-name" id="chip-name">…</span>
+        </span>
+      </button>
+    </aside>
+
+    <!-- Right column -->
+    <div class="main">
+      <header class="topbar">
+        <label class="search">
+          <span class="search-ico">🔍</span>
+          <input id="search" type="text" placeholder="Search games in library…">
+        </label>
+
+        <button class="btn ghost" id="btn-refresh"><span>⟳</span> Refresh</button>
+
+        <div class="filter-wrap">
+          <button class="btn ghost" id="btn-filter"><span>≡</span> Filter</button>
+          <div class="menu" id="filter-menu" hidden></div>
+        </div>
+
+        <div class="spacer"></div>
+
+        <label class="toggle" id="toggle-offline">
+          <span class="toggle-label">LAUNCH OFFLINE</span>
+          <span class="switch"><span class="knob"></span></span>
+        </label>
+
+        <button class="btn danger" id="btn-stop" disabled><span>⊘</span> Stop launch</button>
+      </header>
+
+      <section class="content" id="content"><!-- views render here --></section>
+
+      <footer class="statusbar">
+        <span class="dot" id="status-dot"></span>
+        <span id="status-text"></span>
+        <span class="version" id="version"></span>
+      </footer>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -28,7 +28,7 @@ def ensure(pkg):
         subprocess.check_call([sys.executable, "-m", "pip", "install", pkg])
 
 
-def main():
+def main(web: bool = False):
     ensure("PyInstaller")
     ensure("Pillow")
 
@@ -49,9 +49,18 @@ def main():
         # bundle the icon assets so the app can load them at runtime
         "--add-data", f"{assets}{os.pathsep}assets",
     ]
+    if web:
+        # The pywebview UI: bundle the web/ assets and pull in pywebview's platform
+        # backends (on Windows the Edge WebView2 backend needs pythonnet/clr).
+        ensure("pywebview")
+        cmd += ["--add-data", f"{ROOT / 'web'}{os.pathsep}web",
+                "--collect-all", "webview"]
+        entry = ROOT / "webapp.py"
+    else:
+        entry = ROOT / "app.py"
     if icon.exists():
         cmd += ["--icon", str(icon)]
-    cmd.append(str(ROOT / "app.py"))
+    cmd.append(str(entry))
     print("Running:", " ".join(cmd))
     subprocess.check_call(cmd, cwd=ROOT)
 
@@ -62,4 +71,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # `python build.py`      -> Tkinter UI (dependency-free, the current default)
+    # `python build.py web`  -> pywebview UI (HTML/CSS, needs pywebview)
+    main(web="web" in sys.argv[1:])

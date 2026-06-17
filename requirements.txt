@@ -1,0 +1,12 @@
+# Runtime deps for the pywebview UI (webapp.py).
+# The original Tkinter UI (app.py) needs NOTHING here — it's pure stdlib.
+#
+#   pip install -r requirements.txt
+#
+# On Windows, pywebview renders through the built-in Edge WebView2 runtime
+# (present on Windows 10/11); it pulls in pythonnet to talk to it.
+pywebview>=5.0
+
+# Optional, only for the Tkinter UI's cover art and for building the icon assets.
+# Pillow is NOT used by the web UI.
+Pillow>=9.0
