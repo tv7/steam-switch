@@ -71,6 +71,6 @@ def main(web: bool = False):
 
 
 if __name__ == "__main__":
-    # `python build.py`      -> Tkinter UI (dependency-free, the current default)
-    # `python build.py web`  -> pywebview UI (HTML/CSS, needs pywebview)
-    main(web="web" in sys.argv[1:])
+    # `python build.py`          -> pywebview UI (HTML/CSS, the default)
+    # `python build.py classic`  -> Tkinter UI (dependency-free fallback)
+    main(web="classic" not in sys.argv[1:])
