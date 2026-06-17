@@ -4,6 +4,20 @@ A native desktop window that lists every game installed on this PC. Click a game
 and it switches to the Steam account that owns it, logs in, and launches — no
 manual account swapping. Optional "launch offline" toggle.
 
+## ⬇️ Download
+
+**Grab the latest release → [github.com/tv7/steam-switch/releases](https://github.com/tv7/steam-switch/releases/latest)**
+
+Download the portable **`SteamSwitch.exe`**, double-click, and you're running —
+no Python, no installer, nothing to set up. Windows only for now.
+
+> First-time tip: log into each of your Steam accounts once with **"Remember me"**
+> checked so SteamSwitch can switch between them. See [First-time setup](#first-time-setup).
+
+---
+
+## Run from source
+
 The UI is HTML/CSS rendered in a native webview (Edge WebView2 on Windows) and
 talks to a pure-stdlib Python core. One dependency to run from source:
 
