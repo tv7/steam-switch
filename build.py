@@ -8,8 +8,8 @@ Produces:  dist/SteamSwitch.exe   (Windows)
            dist/SteamSwitch       (Linux/macOS)
 
 PyInstaller can't cross-compile, so build the Windows .exe on Windows.
-This script installs PyInstaller + Pillow into the *current* Python if missing
-(only needed to build; the resulting exe is self-contained).
+This script installs PyInstaller + pywebview + Pillow into the *current* Python
+if missing (only needed to build; the resulting exe is self-contained).
 """
 
 import os
@@ -28,9 +28,10 @@ def ensure(pkg):
         subprocess.check_call([sys.executable, "-m", "pip", "install", pkg])
 
 
-def main(web: bool = False):
+def main():
     ensure("PyInstaller")
-    ensure("Pillow")
+    ensure("pywebview")
+    ensure("Pillow")          # only used to (re)generate the icon assets below
 
     # Make sure the logo/icon assets exist (they're drawn with Pillow).
     assets = ROOT / "assets"
@@ -46,21 +47,16 @@ def main(web: bool = False):
         "--name", name,
         "--noconfirm",
         "--clean",
-        # bundle the icon assets so the app can load them at runtime
+        # bundle the icon + web assets so the app can load them at runtime, and
+        # pull in pywebview's platform backends (on Windows the Edge WebView2
+        # backend needs pythonnet/clr).
         "--add-data", f"{assets}{os.pathsep}assets",
+        "--add-data", f"{ROOT / 'web'}{os.pathsep}web",
+        "--collect-all", "webview",
     ]
-    if web:
-        # The pywebview UI: bundle the web/ assets and pull in pywebview's platform
-        # backends (on Windows the Edge WebView2 backend needs pythonnet/clr).
-        ensure("pywebview")
-        cmd += ["--add-data", f"{ROOT / 'web'}{os.pathsep}web",
-                "--collect-all", "webview"]
-        entry = ROOT / "webapp.py"
-    else:
-        entry = ROOT / "app.py"
     if icon.exists():
         cmd += ["--icon", str(icon)]
-    cmd.append(str(entry))
+    cmd.append(str(ROOT / "webapp.py"))
     print("Running:", " ".join(cmd))
     subprocess.check_call(cmd, cwd=ROOT)
 
@@ -71,6 +67,4 @@ def main(web: bool = False):
 
 
 if __name__ == "__main__":
-    # `python build.py`          -> pywebview UI (HTML/CSS, the default)
-    # `python build.py classic`  -> Tkinter UI (dependency-free fallback)
-    main(web="classic" not in sys.argv[1:])
+    main()

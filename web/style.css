@@ -1,6 +1,6 @@
-/* SteamSwitch — Proton-Dark theme (see ui_refresh/proton_dark/DESIGN.md).
-   Tokens map straight from the design system: deep navy/slate tonal layering,
-   a vibrant blue primary, soft 8px radii, 1px outlines instead of shadows. */
+/* SteamSwitch — Proton-Dark theme.
+   Deep navy/slate tonal layering, a vibrant blue primary, soft 8px radii,
+   1px outlines instead of shadows. */
 
 /* Bundled fonts (web/fonts/*.woff2) so the design typography ships in the .exe —
    no network, no system install. Hanken Grotesk = UI; Geist = labels/metadata. */

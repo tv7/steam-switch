@@ -1,7 +1,6 @@
 @echo off
 REM Double-click launcher for SteamSwitch (pywebview UI).
 REM Checks for the pywebview package on first run and offers to install it.
-REM The dependency-free Tkinter UI is available via SteamSwitch-classic.bat.
 cd /d "%~dp0"
 
 set "PYW="
@@ -40,7 +39,6 @@ exit /b
 echo.
 echo No problem. Install it yourself with:
 echo     pip install -r requirements.txt
-echo Or just run SteamSwitch-classic.bat for the no-install Tkinter UI.
 echo.
 pause
 exit /b
@@ -49,7 +47,6 @@ exit /b
 echo.
 echo The install failed. Try it manually:
 echo     pip install -r requirements.txt
-echo Or run SteamSwitch-classic.bat for the no-install Tkinter UI.
 echo.
 pause
 exit /b

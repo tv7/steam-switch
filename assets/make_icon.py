@@ -4,13 +4,12 @@
 
 Produces, in this folder:
   steamswitch.ico      multi-size Windows icon (title bar / taskbar / .exe)
-  steamswitch.png      256px app icon (iconphoto on Linux/macOS, docs, etc.)
-  steamswitch_28.png   small mark for the in-app header
+  steamswitch.png      256px app icon (sidebar logo, window icon, docs, etc.)
 
 The mark is two opposing arrows (the universal "switch / swap" glyph) in
 Steam-blue on a dark rounded tile — drawn purely from primitives, no font needed.
 Pillow is only needed to BUILD these assets (it's bundled into the .exe build);
-the app loads the finished PNG/ICO at runtime with plain Tkinter.
+the app loads the finished PNG/ICO at runtime.
 """
 
 from __future__ import annotations
@@ -21,7 +20,7 @@ from PIL import Image, ImageDraw
 
 HERE = Path(__file__).resolve().parent
 
-# Palette (matches app.py)
+# Palette (dark Steam-blue tile)
 GRAD_TOP = (39, 56, 78)      # #27384e
 GRAD_BOTTOM = (22, 31, 43)   # #161f2b
 ARROW_A = (102, 192, 244)    # #66c0f4  Steam light-blue
@@ -82,10 +81,9 @@ def main() -> None:
     art = build()
     png = art.resize((256, 256), Image.LANCZOS)
     png.save(HERE / "steamswitch.png")
-    art.resize((28, 28), Image.LANCZOS).save(HERE / "steamswitch_28.png")
     png.save(HERE / "steamswitch.ico",
              sizes=[(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
-    print("Wrote steamswitch.png, steamswitch_28.png, steamswitch.ico to", HERE)
+    print("Wrote steamswitch.png, steamswitch.ico to", HERE)
 
 
 if __name__ == "__main__":

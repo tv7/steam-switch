@@ -3,13 +3,11 @@
 This is the Proton-Dark UI. It renders the interface in a native webview (Edge
 WebView2 on Windows) and talks to the existing `core/*` modules through a thin
 JS↔Python bridge (the `Api` class below). All Steam logic — account switching,
-launching, the offline flag method, cover resolution — stays in `core/` exactly
-as the Tkinter app uses it; this file only wires it to the web UI.
+launching, the offline flag method, cover resolution — lives in `core/`; this
+file only wires it to the web UI.
 
 Run:   python webapp.py        (needs `pip install pywebview`; on Windows it uses
                                 the built-in Edge WebView2 runtime)
-
-The original Tkinter GUI (`app.py`) is kept as a dependency-free fallback.
 """
 
 from __future__ import annotations
@@ -30,9 +28,9 @@ except ImportError:      # pragma: no cover - import guard
 
 APP_VERSION = "proton-dark"
 
-# Distinct, vivid account colors, assigned by position (matches the Tkinter app):
-# a SteamID hash-to-hue clusters into lookalikes because real SteamIDs differ only
-# in their last digits, so position gives reliably different colors.
+# Distinct, vivid account colors, assigned by position: a SteamID hash-to-hue
+# clusters into lookalikes because real SteamIDs differ only in their last digits,
+# so position gives reliably different colors.
 _ACCOUNT_PALETTE = [
     "#58a6ff", "#57cc99", "#ff8a65", "#c792ea", "#ff6384",
     "#ffd166", "#26c6da", "#f071b2", "#7cb342", "#9575cd",
@@ -162,7 +160,7 @@ class Api:
     def play(self, appid: int, offline: bool = False) -> dict:
         """Switch to the owning account and launch the game. Returns immediately;
         progress + the final result are pushed to the page via onStatus/onLaunchDone.
-        Mirrors the Tkinter app's guard + cancel semantics."""
+        Single-launch guard + cooperative cancel via should_cancel."""
         appid = int(appid)
         if self._launching:
             return {"ok": False, "error": "busy",
@@ -240,9 +238,8 @@ def main():
     if webview is None:
         sys.stderr.write(
             "pywebview is not installed. Install it with:\n\n"
-            "    pip install pywebview\n\n"
-            "On Windows it uses the built-in Edge WebView2 runtime. The original "
-            "Tkinter UI still works dependency-free:  python app.py\n")
+            "    pip install -r requirements.txt\n\n"
+            "On Windows it uses the built-in Edge WebView2 runtime.\n")
         sys.exit(1)
 
     api = Api()

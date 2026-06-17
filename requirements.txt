@@ -1,5 +1,4 @@
-# Runtime deps for the pywebview UI (webapp.py).
-# The original Tkinter UI (app.py) needs NOTHING here — it's pure stdlib.
+# Runtime dependency for SteamSwitch (webapp.py).
 #
 #   pip install -r requirements.txt
 #
@@ -7,6 +6,6 @@
 # (present on Windows 10/11); it pulls in pythonnet to talk to it.
 pywebview>=5.0
 
-# Optional, only for the Tkinter UI's cover art and for building the icon assets.
-# Pillow is NOT used by the web UI.
+# Build-only: Pillow draws the icon assets (assets/make_icon.py). The app
+# itself does NOT use Pillow. Only needed if you run build.py / make_icon.py.
 Pillow>=9.0
