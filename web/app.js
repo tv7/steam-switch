@@ -3,7 +3,7 @@
 
 "use strict";
 
-const STATE = { games: [], accounts: [], current: null, version: "", steam_root: null };
+const STATE = { games: [], accounts: [], current: null, version: "", logo: null, steam_root: null };
 const UI = { view: "library", search: "", sort: "az", filter: "all", offline: false, launching: false };
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -37,6 +37,7 @@ function applyState(s) {
   STATE.accounts = s.accounts || [];
   STATE.current = s.current_account || null;
   STATE.version = s.version || "";
+  STATE.logo = s.logo || null;
   STATE.steam_root = s.steam_root || null;
   if (UI.filter !== "all" && UI.filter !== "unmapped"
       && !STATE.accounts.some(a => a.steamid64 === UI.filter)) UI.filter = "all";
@@ -51,6 +52,8 @@ function setStatus(text, kind = "") {
 /* --------------------------------------------------------- chrome render */
 function renderChrome() {
   $("#version").textContent = STATE.version;
+  const logo = $("#brand-logo");
+  if (logo && STATE.logo && logo.getAttribute("src") !== STATE.logo) logo.src = STATE.logo;
   document.querySelectorAll(".nav-item").forEach(b =>
     b.classList.toggle("active", b.dataset.view === UI.view));
   // account chip

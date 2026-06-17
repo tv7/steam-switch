@@ -45,6 +45,18 @@ def _base_dir() -> Path:
     return Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 
 
+def _asset_data_url(name: str) -> str | None:
+    """Read a bundled image asset and return it as a data: URL (so the page can
+    show it without relative file:// paths, identically from source and from the
+    frozen .exe)."""
+    try:
+        data = (_base_dir() / "assets" / name).read_bytes()
+    except OSError:
+        return None
+    mime = "image/png" if name.endswith(".png") else "image/x-icon"
+    return f"data:{mime};base64," + base64.b64encode(data).decode("ascii")
+
+
 class Api:
     """The JS-facing bridge. Every public method is callable from the front-end as
     `window.pywebview.api.<name>(...)` and returns a JSON-serializable value (or a
@@ -127,6 +139,7 @@ class Api:
         root = steam_paths.steam_root()
         return {
             "version": APP_VERSION,
+            "logo": _asset_data_url("steamswitch.png"),
             "steam_root": str(root) if root else None,
             "current_account": self.current_account,
             "accounts": accounts_out,
@@ -240,7 +253,14 @@ def main():
         background_color="#0b1326",
     )
     api.window = window
-    webview.start()
+
+    # Window / taskbar icon. The frozen .exe gets its icon from PyInstaller's
+    # --icon; this covers running from source where supported by the backend.
+    icon = _base_dir() / "assets" / "steamswitch.png"
+    try:
+        webview.start(icon=str(icon))
+    except TypeError:           # older pywebview without an `icon` kwarg
+        webview.start()
 
 
 if __name__ == "__main__":
