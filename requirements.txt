@@ -1,0 +1,11 @@
+# Runtime dependency for SteamSwitch (webapp.py).
+#
+#   pip install -r requirements.txt
+#
+# On Windows, pywebview renders through the built-in Edge WebView2 runtime
+# (present on Windows 10/11); it pulls in pythonnet to talk to it.
+pywebview>=5.0
+
+# Build-only: Pillow draws the icon assets (assets/make_icon.py). The app
+# itself does NOT use Pillow. Only needed if you run build.py / make_icon.py.
+Pillow>=9.0

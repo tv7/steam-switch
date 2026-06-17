@@ -4,15 +4,17 @@ A native desktop window that lists every game installed on this PC. Click a game
 and it switches to the Steam account that owns it, logs in, and launches — no
 manual account swapping. Optional "launch offline" toggle.
 
-**No installation needed.** The GUI uses Tkinter, which ships with Python — there
-is nothing to `pip install` to run it.
+The UI is HTML/CSS rendered in a native webview (Edge WebView2 on Windows) and
+talks to a pure-stdlib Python core. One dependency to run from source:
 
 ```
-python app.py
+pip install -r requirements.txt
+python webapp.py
 ```
 
 On Windows you can also just **double-click `SteamSwitch.bat`** — it starts the
-app with no console window (and tells you what to do if Python isn't installed).
+app with no console window, offers to install the dependency on first run, and
+tells you what to do if Python isn't installed.
 
 ## Portable single-file build (no Python at all)
 
@@ -22,15 +24,15 @@ To get one double-click executable you can drop anywhere:
 python build.py        # -> dist/SteamSwitch.exe  (run this on Windows)
 ```
 
-The resulting `.exe` is fully self-contained — no Python, no installer, and
-cover-art support (Pillow) is bundled in. PyInstaller can't cross-compile, so
-build the Windows `.exe` on a Windows machine.
+The resulting `.exe` is fully self-contained — no Python, no installer; the web
+UI and pywebview are bundled in. PyInstaller can't cross-compile, so build the
+Windows `.exe` on a Windows machine.
 
 ## Status
 
 - [x] Cross-platform core: Steam discovery, game enumeration, VDF parsing
 - [x] Windows account switching (registry `AutoLoginUser` + `loginusers.vdf`)
-- [x] Native Tkinter GUI (cover-art grid, account drawer, offline toggle)
+- [x] Native webview GUI (cover-art grid, accounts view, offline toggle)
 - [x] Offline mode via Steam's `WantsOfflineMode` flag (no clicking, no calibration)
 - [ ] Linux account switching (next phase)
 
@@ -44,14 +46,14 @@ build the Windows `.exe` on a Windows machine.
 | Resolve cover art (local cache → CDN → Steam store API) | `core/covers.py` |
 | Switch account (registry + loginusers) and control the Steam process | `core/switcher.py` |
 | Orchestrate switch → launch | `core/launcher.py` |
-| Native desktop GUI (Tkinter) | `app.py` |
+| Native webview GUI + JS↔core bridge | `webapp.py`, `web/` |
 | Portable .exe builder | `build.py` |
 
 ## First-time setup
 
 1. Log into **each** Steam account once with **"Remember me"** checked. This is
    mandatory — see the limitation below.
-2. Run `python app.py` (or the built `SteamSwitch.exe`). Installed games are
+2. Run `python webapp.py` (or the built `SteamSwitch.exe`). Installed games are
    mapped to their owning account **automatically** from Steam's local data — no
    API key needed.
 3. Click any game to play.

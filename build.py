@@ -8,8 +8,8 @@ Produces:  dist/SteamSwitch.exe   (Windows)
            dist/SteamSwitch       (Linux/macOS)
 
 PyInstaller can't cross-compile, so build the Windows .exe on Windows.
-This script installs PyInstaller + Pillow into the *current* Python if missing
-(only needed to build; the resulting exe is self-contained).
+This script installs PyInstaller + pywebview + Pillow into the *current* Python
+if missing (only needed to build; the resulting exe is self-contained).
 """
 
 import os
@@ -30,7 +30,8 @@ def ensure(pkg):
 
 def main():
     ensure("PyInstaller")
-    ensure("Pillow")
+    ensure("pywebview")
+    ensure("Pillow")          # only used to (re)generate the icon assets below
 
     # Make sure the logo/icon assets exist (they're drawn with Pillow).
     assets = ROOT / "assets"
@@ -46,12 +47,16 @@ def main():
         "--name", name,
         "--noconfirm",
         "--clean",
-        # bundle the icon assets so the app can load them at runtime
+        # bundle the icon + web assets so the app can load them at runtime, and
+        # pull in pywebview's platform backends (on Windows the Edge WebView2
+        # backend needs pythonnet/clr).
         "--add-data", f"{assets}{os.pathsep}assets",
+        "--add-data", f"{ROOT / 'web'}{os.pathsep}web",
+        "--collect-all", "webview",
     ]
     if icon.exists():
         cmd += ["--icon", str(icon)]
-    cmd.append(str(ROOT / "app.py"))
+    cmd.append(str(ROOT / "webapp.py"))
     print("Running:", " ".join(cmd))
     subprocess.check_call(cmd, cwd=ROOT)
 
