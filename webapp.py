@@ -44,6 +44,31 @@ def _base_dir() -> Path:
     return Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 
 
+def _data_dir() -> Path:
+    """A writable folder for app settings. Next to the .exe when frozen (so a
+    portable build keeps its settings), else the source-tree `data/` dir."""
+    base = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) \
+        else Path(__file__).resolve().parent
+    d = base / "data"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def _load_settings() -> dict:
+    try:
+        return json.loads((_data_dir() / "settings.json").read_text("utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def _save_settings(data: dict) -> None:
+    try:
+        (_data_dir() / "settings.json").write_text(
+            json.dumps(data, indent=2), encoding="utf-8")
+    except OSError:
+        pass
+
+
 def _asset_data_url(name: str) -> str | None:
     """Read a bundled image asset and return it as a data: URL (so the page can
     show it without relative file:// paths, identically from source and from the
@@ -85,6 +110,18 @@ class Api:
     def _account_name(self, sid: str | None) -> str | None:
         a = next((x for x in self.accounts if x.steamid64 == sid), None)
         return a.persona_name if a else None
+
+    def _resolve_current(self):
+        """The account to treat as 'current': the one Steam will auto-login as
+        (AutoLoginUser), matched by login name. If that's blank/unmatched, fall back
+        to the most-recent account (the one Steam boots into), so the chip never says
+        'No account' when accounts exist. Returns an Account or None."""
+        login = (self.current_account or "").lower()
+        if login:
+            for a in self.accounts:
+                if a.account_name.lower() == login:
+                    return a
+        return next((a for a in self.accounts if a.most_recent), None)
 
     def _reload(self):
         """Refresh accounts + games + ownership maps from disk."""
@@ -131,11 +168,12 @@ class Api:
                 "mapped": bool(sid),
             })
 
+        current = self._resolve_current()
+        current_sid = current.steamid64 if current else None
         accounts_out = []
         for a in self.accounts:
             ready, _why = switcher.can_autologin(a.account_name)
-            is_current = (a.account_name == self.current_account
-                          or a.persona_name == self.current_account)
+            is_current = a.steamid64 == current_sid
             accounts_out.append({
                 "steamid64": a.steamid64,
                 "account_name": a.account_name,
@@ -150,8 +188,9 @@ class Api:
         return {
             "version": APP_VERSION,
             "logo": _asset_data_url("steamswitch.png"),
+            "language": _load_settings().get("language", "en"),
             "steam_root": str(root) if root else None,
-            "current_account": self.current_account,
+            "current_account": current.persona_name if current else None,
             "accounts": accounts_out,
             "games": games_out,
         }
@@ -239,6 +278,14 @@ class Api:
         if self._launching:
             self._cancel.set()
             self._push("onStatus", {"text": "Cancelling launch…", "kind": ""})
+        return {"ok": True}
+
+    def set_language(self, lang: str) -> dict:
+        """Persist the chosen UI language (e.g. 'en' / 'ar'). The page applies the
+        translation + RTL itself; this just remembers the choice for next launch."""
+        s = _load_settings()
+        s["language"] = lang
+        _save_settings(s)
         return {"ok": True}
 
     def add_account(self) -> dict:

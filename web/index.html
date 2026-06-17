@@ -17,10 +17,10 @@
 
       <nav class="nav">
         <button class="nav-item active" data-view="library">
-          <span class="nav-ico">▦</span> Library
+          <span class="nav-ico">▦</span> <span data-i18n="nav.library">Library</span>
         </button>
         <button class="nav-item" data-view="settings">
-          <span class="nav-ico">⚙</span> Settings
+          <span class="nav-ico">⚙</span> <span data-i18n="nav.settings">Settings</span>
         </button>
       </nav>
 
@@ -38,24 +38,24 @@
       <header class="topbar">
         <label class="search">
           <span class="search-ico">🔍</span>
-          <input id="search" type="text" placeholder="Search games in library…">
+          <input id="search" type="text" data-i18n-ph="search.ph" placeholder="Search games in library…">
         </label>
 
-        <button class="btn ghost" id="btn-refresh"><span>⟳</span> Refresh</button>
+        <button class="btn ghost" id="btn-refresh"><span>⟳</span> <span data-i18n="btn.refresh">Refresh</span></button>
 
         <div class="filter-wrap">
-          <button class="btn ghost" id="btn-filter"><span>≡</span> Filter</button>
+          <button class="btn ghost" id="btn-filter"><span>≡</span> <span data-i18n="btn.filter">Filter</span></button>
           <div class="menu" id="filter-menu" hidden></div>
         </div>
 
         <div class="spacer"></div>
 
         <label class="toggle" id="toggle-offline">
-          <span class="toggle-label">LAUNCH OFFLINE</span>
+          <span class="toggle-label" data-i18n="toggle.offline">LAUNCH OFFLINE</span>
           <span class="switch"><span class="knob"></span></span>
         </label>
 
-        <button class="btn danger" id="btn-stop" disabled><span>⊘</span> Stop launch</button>
+        <button class="btn danger" id="btn-stop" disabled><span>⊘</span> <span data-i18n="btn.stop">Stop launch</span></button>
       </header>
 
       <section class="content" id="content"><!-- views render here --></section>

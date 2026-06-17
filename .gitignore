@@ -7,9 +7,10 @@ build/
 dist/
 *.spec
 
-# Generated/local data (account map cache, downloaded cover art)
+# Generated/local data (account map cache, downloaded cover art, UI settings)
 data/covers/
 data/mapping.json
+data/settings.json
 
 # OS
 .DS_Store

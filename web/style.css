@@ -16,6 +16,14 @@
   src: url("fonts/geist-500.woff2") format("woff2"); }
 @font-face { font-family: "Geist"; font-weight: 600; font-display: swap;
   src: url("fonts/geist-600.woff2") format("woff2"); }
+/* Arabic UI font (Cairo). Only the Arabic glyph range is bundled — Latin text
+   falls back to Hanken Grotesk, which is already loaded. */
+@font-face { font-family: "Cairo"; font-weight: 400; font-display: swap;
+  src: url("fonts/cairo-arabic-400.woff2") format("woff2"); unicode-range: U+0600-06FF,U+0750-077F,U+08A0-08FF,U+FB50-FDFF,U+FE70-FEFF; }
+@font-face { font-family: "Cairo"; font-weight: 600; font-display: swap;
+  src: url("fonts/cairo-arabic-600.woff2") format("woff2"); unicode-range: U+0600-06FF,U+0750-077F,U+08A0-08FF,U+FB50-FDFF,U+FE70-FEFF; }
+@font-face { font-family: "Cairo"; font-weight: 700; font-display: swap;
+  src: url("fonts/cairo-arabic-700.woff2") format("woff2"); unicode-range: U+0600-06FF,U+0750-077F,U+08A0-08FF,U+FB50-FDFF,U+FE70-FEFF; }
 
 :root {
   --bg:            #0b1326;  /* background canvas */
@@ -253,7 +261,12 @@ input { font-family: inherit; }
 .set-val.good { color: var(--good); }
 .set-val.bad { color: var(--bad); }
 .set-note { font-size: 12px; color: var(--faint); font-style: italic; margin-top: 8px; }
-select:disabled { background: var(--panel); color: var(--muted); border: 1px solid var(--outline); border-radius: var(--r-sm); padding: 6px 10px; }
+.lang-select {
+  background: var(--panel); color: var(--text);
+  border: 1px solid var(--outline); border-radius: var(--r-sm);
+  padding: 6px 10px; font-family: inherit; font-size: 13px; cursor: pointer;
+}
+.lang-select:focus { outline: none; border-color: var(--primary); }
 
 .empty { color: var(--faint); padding: 30px 6px; max-width: 420px; line-height: 1.5; }
 
@@ -270,3 +283,21 @@ select:disabled { background: var(--panel); color: var(--muted); border: 1px sol
 ::-webkit-scrollbar { width: 10px; }
 ::-webkit-scrollbar-thumb { background: var(--outline); border-radius: var(--r-full); border: 2px solid var(--bg); }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* --------------------------------------------------- Arabic / RTL */
+/* Cairo for Arabic UI; Latin (brand, account names, numbers) still uses Hanken
+   Grotesk / Geist via the unicode-range split above. */
+html[lang="ar"] {
+  --font: "Cairo", "Hanken Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Cairo", "Geist", "Segoe UI", system-ui, sans-serif;
+}
+
+/* The flex layout mirrors automatically under dir=rtl (sidebar → right, topbar
+   order reverses). These handle the few spots that pin a physical side. */
+.brand { direction: ltr; }                       /* keep logo + wordmark in order */
+[dir="rtl"] .nav-item, [dir="rtl"] .menu-item { text-align: right; }
+[dir="rtl"] .account-chip, [dir="rtl"] .chip-count, [dir="rtl"] .chip-name { text-align: right; }
+[dir="rtl"] .switch .knob { left: auto; right: 3px; }
+[dir="rtl"] .toggle.on .switch .knob { left: auto; right: 23px; }
+[dir="rtl"] .menu { left: auto; right: 0; }
+[dir="rtl"] .statusbar .version { margin-left: 0; margin-right: auto; }
