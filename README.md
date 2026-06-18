@@ -78,7 +78,7 @@ OS. See [`src-tauri/README.md`](src-tauri/README.md) for prerequisites.
 
 1. Log into **each** Steam account once with **"Remember me"** checked. This is
    mandatory — see the limitation below.
-2. Run the app (`cargo tauri dev`, or the built `SteamSwitch.exe`). Installed games are
+2. Run **`SteamSwitch.exe`** (or `cargo tauri dev` from source). Installed games are
    mapped to their owning account **automatically** from Steam's local data — no
    API key needed.
 3. Click any game to play.
