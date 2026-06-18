@@ -54,32 +54,34 @@ def main():
 
     run([cargo, "tauri", "build"], cwd=ROOT)
 
-    # 3. place the sidecar next to every built SteamSwitch executable --------
+    # 3. assemble a clean portable folder: dist/SteamSwitch/ = just the app exe +
+    #    server[.exe], ready to zip and upload to GitHub Releases. (cargo tauri build
+    #    also makes an NSIS/MSI installer under target/release/bundle/, but it does
+    #    NOT include the sidecar — externalBin isn't wired — so use this folder.)
     rel = ROOT / "src-tauri" / "target" / "release"
-    placed = []
-    if rel.is_dir():
-        for exe_name in ("steamswitch" + EXE, "SteamSwitch" + EXE):
-            cand = rel / exe_name
-            if cand.exists():
-                dst = rel / sidecar.name
-                shutil.copy2(sidecar, dst)
-                placed.append(dst)
-                break
-        # bundled app folders (portable / installer payloads)
-        bundle = rel / "bundle"
-        if bundle.is_dir():
-            for exe in list(bundle.rglob("SteamSwitch" + EXE)) + list(bundle.rglob("steamswitch" + EXE)):
-                dst = exe.parent / sidecar.name
-                shutil.copy2(sidecar, dst)
-                placed.append(dst)
+    app_exe = next((rel / n for n in ("SteamSwitch" + EXE, "steamswitch" + EXE)
+                    if (rel / n).exists()), None)
+    if app_exe is None:
+        sys.exit(f"Couldn't find the built app exe in {rel} — did `cargo tauri build` succeed?")
 
-    print("\nDone. Sidecar placed next to:")
-    for p in placed:
-        print("   ", p)
-    if not placed:
-        print("   (couldn't locate the built exe — copy", sidecar, "next to it manually)")
-    print("\nThe portable app is the SteamSwitch executable + server" + EXE + " together.")
-    print("Run it and confirm it works; report the exact output paths if the layout differs.")
+    portable = ROOT / "dist" / "SteamSwitch"
+    shutil.rmtree(portable, ignore_errors=True)
+    portable.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(app_exe, portable / ("SteamSwitch" + EXE))
+    shutil.copy2(sidecar, portable / sidecar.name)
+    # Also drop the sidecar next to the raw exe so running target/release directly works.
+    shutil.copy2(sidecar, rel / sidecar.name)
+
+    # Zip it: dist/SteamSwitch-portable.zip (unzips to a SteamSwitch/ folder).
+    archive = shutil.make_archive(
+        str(ROOT / "dist" / "SteamSwitch-portable"), "zip",
+        root_dir=ROOT / "dist", base_dir="SteamSwitch")
+
+    print("\nDone. Portable app folder (the two files that must stay together):")
+    print("   ", portable / ("SteamSwitch" + EXE))
+    print("   ", portable / sidecar.name)
+    print("\nReady to share — upload this zip to GitHub Releases:")
+    print("   ", archive)
 
 
 if __name__ == "__main__":

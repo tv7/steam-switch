@@ -38,15 +38,17 @@ just need Python + the `core/` deps (stdlib only). Edit `web/*` and reload.
 
 ## Build a release
 
-One command from the repo root does all three steps (build the sidecar, build the
-Tauri app, and copy the sidecar next to each built executable):
+One command from the repo root builds the sidecar, builds the Tauri app, and
+assembles a clean portable folder:
 
 ```
 python build.py
 ```
 
-It prints where it placed `server[.exe]`. The portable app is **the SteamSwitch
-executable + `server.exe` together** — distribute them in the same folder.
+It produces **`dist/SteamSwitch/`** (just `SteamSwitch.exe` + `server.exe`) and zips
+it to **`dist/SteamSwitch-portable.zip`** — that zip is what you upload to GitHub
+Releases. Users unzip and run `SteamSwitch.exe`; the two files must stay in the same
+folder. (Needs the Edge WebView2 runtime — standard on Windows 10/11.)
 
 (For a polished single-file installer later, wire `server.exe` in as a Tauri
 **externalBin** so it's bundled automatically. Not done yet because declaring
