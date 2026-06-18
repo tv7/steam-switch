@@ -21,9 +21,9 @@ src-tauri/src/main.rs   spawn sidecar + open window + inject URL + cleanup
 2. **Tauri CLI** — `cargo install tauri-cli --version "^2"` (gives `cargo tauri`).
 3. **WebView2 runtime** — already on Windows 10/11.
 4. **Python + PyInstaller** — for building the sidecar (`pip install pyinstaller`).
-5. **App icons** (first time): from the repo root run
-   `cargo tauri icon assets/steamswitch.png`
-   — this generates `src-tauri/icons/*` referenced by `tauri.conf.json`.
+5. **App icons** — `build.py` auto-generates `src-tauri/icons/*` from
+   `assets/steamswitch.png` on first run. (To do it by hand:
+   `cargo tauri icon assets/steamswitch.png`.)
 
 ## Develop (fast iteration)
 

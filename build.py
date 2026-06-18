@@ -42,6 +42,16 @@ def main():
         sys.exit("`cargo` not found. Install Rust (https://rustup.rs) and the Tauri CLI:\n"
                  '    cargo install tauri-cli --version "^2"\n'
                  "See src-tauri/README.md.")
+
+    # App icons: cargo tauri build fails if src-tauri/icons/ isn't populated. Generate
+    # them from the source PNG on first build (idempotent — skipped once present).
+    icons_dir = ROOT / "src-tauri" / "icons"
+    needed = ["32x32.png", "128x128.png", "128x128@2x.png", "icon.icns", "icon.ico"]
+    if not all((icons_dir / n).exists() for n in needed):
+        src_png = ROOT / "assets" / "steamswitch.png"
+        print("Icons missing — generating from", src_png)
+        run([cargo, "tauri", "icon", str(src_png)], cwd=ROOT)
+
     run([cargo, "tauri", "build"], cwd=ROOT)
 
     # 3. place the sidecar next to every built SteamSwitch executable --------
