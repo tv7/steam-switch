@@ -1,11 +1,17 @@
-# Runtime dependency for SteamSwitch (webapp.py).
+# SteamSwitch is a Tauri (Rust) app + a Python sidecar (server.py).
+#
+# RUNTIME: none. The sidecar (server.py) and core/* are pure Python standard
+# library — nothing to pip install to run from source.
+#
+# BUILD-ONLY (only needed to produce the distributable, see build.py /
+# src-tauri/README.md):
 #
 #   pip install -r requirements.txt
 #
-# On Windows, pywebview renders through the built-in Edge WebView2 runtime
-# (present on Windows 10/11); it pulls in pythonnet to talk to it.
-pywebview>=5.0
+# PyInstaller bundles the sidecar into server.exe.
+PyInstaller>=6.0
 
-# Build-only: Pillow draws the icon assets (assets/make_icon.py). The app
-# itself does NOT use Pillow. Only needed if you run build.py / make_icon.py.
+# Optional, build-only: Pillow is used by assets/make_icon.py to (re)draw the
+# source icon art. Not needed for normal builds — `cargo tauri icon` generates the
+# app icons from the existing assets/steamswitch.png.
 Pillow>=9.0

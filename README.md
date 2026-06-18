@@ -16,37 +16,43 @@ no Python, no installer, nothing to set up. Windows only for now.
 
 ---
 
+## Architecture
+
+SteamSwitch is a **Tauri (Rust) shell** hosting an **HTML/CSS UI** (Edge WebView2
+on Windows), talking to a **pure-stdlib Python sidecar** that holds all the Steam
+logic. The Rust shell opens the window (WebView2 initialises asynchronously, so the
+window never freezes), spawns the sidecar, and talks to it over localhost HTTP +
+Server-Sent Events. (It used to be a pywebview app; that froze for ~20s on launch
+because pywebview initialises WebView2 synchronously on the UI thread — the Tauri
+shell fixes that.)
+
 ## Run from source
 
-The UI is HTML/CSS rendered in a native webview (Edge WebView2 on Windows) and
-talks to a pure-stdlib Python core. One dependency to run from source:
+Needs the **Rust toolchain** + the **Tauri CLI** (one-time — see
+[`src-tauri/README.md`](src-tauri/README.md)); the Python side is stdlib-only.
 
 ```
-pip install -r requirements.txt
-python webapp.py
+cargo tauri dev
 ```
 
-On Windows you can also just **double-click `SteamSwitch.bat`** — it starts the
-app with no console window, offers to install the dependency on first run, and
-tells you what to do if Python isn't installed.
+In dev the shell runs `python server.py` for you, so you only need Python on PATH.
 
-## Portable single-file build (no Python at all)
-
-To get one double-click executable you can drop anywhere:
+## Build the app
 
 ```
-python build.py        # -> dist/SteamSwitch.exe  (run this on Windows)
+python build.py        # run on Windows
 ```
 
-The resulting `.exe` is fully self-contained — no Python, no installer; the web
-UI and pywebview are bundled in. PyInstaller can't cross-compile, so build the
-Windows `.exe` on a Windows machine.
+One command: it builds the Python sidecar (PyInstaller), generates the app icons if
+needed, runs `cargo tauri build`, and places the sidecar next to the built
+executable. Neither PyInstaller nor Tauri can cross-compile, so build on the target
+OS. See [`src-tauri/README.md`](src-tauri/README.md) for prerequisites.
 
 ## Status
 
 - [x] Cross-platform core: Steam discovery, game enumeration, VDF parsing
 - [x] Windows account switching (registry `AutoLoginUser` + `loginusers.vdf`)
-- [x] Native webview GUI (cover-art grid, accounts view, offline toggle)
+- [x] Tauri (Rust) shell + HTML/CSS GUI (cover-art grid, accounts view, offline toggle)
 - [x] Offline mode via Steam's `WantsOfflineMode` flag (no clicking, no calibration)
 - [ ] Linux account switching (next phase)
 
@@ -60,14 +66,17 @@ Windows `.exe` on a Windows machine.
 | Resolve cover art (local cache → CDN → Steam store API) | `core/covers.py` |
 | Switch account (registry + loginusers) and control the Steam process | `core/switcher.py` |
 | Orchestrate switch → launch | `core/launcher.py` |
-| Native webview GUI + JS↔core bridge | `webapp.py`, `web/` |
-| Portable .exe builder | `build.py` |
+| HTML/CSS UI | `web/` |
+| Python sidecar: HTTP + SSE bridge over `core/*` | `server.py` |
+| JS bridge shim (`window.pywebview.api.*` → HTTP/SSE) | `web/bridge.js` |
+| Tauri (Rust) shell: window + spawns the sidecar | `src-tauri/` |
+| Build (sidecar + Tauri app) | `build.py`, `build_sidecar.py` |
 
 ## First-time setup
 
 1. Log into **each** Steam account once with **"Remember me"** checked. This is
    mandatory — see the limitation below.
-2. Run `python webapp.py` (or the built `SteamSwitch.exe`). Installed games are
+2. Run the app (`cargo tauri dev`, or the built `SteamSwitch.exe`). Installed games are
    mapped to their owning account **automatically** from Steam's local data — no
    API key needed.
 3. Click any game to play.
