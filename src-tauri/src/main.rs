@@ -53,6 +53,18 @@ fn sidecar_command() -> Command {
 fn start_sidecar() -> (Child, String) {
     let mut cmd = sidecar_command();
     cmd.stdout(Stdio::piped());
+    // Release: discard the sidecar's stderr (no console to write to). Dev: inherit it
+    // so server.py's logs show in the `cargo tauri dev` terminal.
+    #[cfg(not(debug_assertions))]
+    cmd.stderr(Stdio::null());
+    // Windows: spawn the (console-subsystem) sidecar WITHOUT a console window —
+    // otherwise a terminal pops up alongside the app. Redirected stdout still works.
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
     let mut child = cmd.spawn().expect("failed to start the SteamSwitch sidecar");
 
     let stdout = child.stdout.take().expect("sidecar stdout");
