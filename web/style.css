@@ -284,6 +284,112 @@ input { font-family: inherit; }
 ::-webkit-scrollbar-thumb { background: var(--outline); border-radius: var(--r-full); border: 2px solid var(--bg); }
 ::-webkit-scrollbar-track { background: transparent; }
 
+/* ------------------------------------------- in-app notifications */
+/* Centered modal layer: progress card (promo style), confirm + alert dialogs. */
+#overlay { position: fixed; inset: 0; z-index: 100; display: none; }
+#overlay.show { display: block; }
+.modal-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(7, 11, 17, .55); backdrop-filter: blur(2px);
+  display: flex; align-items: center; justify-content: center;
+}
+
+.popup {
+  width: 460px; max-width: calc(100vw - 48px);
+  background: #101a26; border: 1px solid rgba(255, 255, 255, .07);
+  border-radius: 16px; padding: 26px 30px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .6);
+  opacity: 0; transform: translateY(8px) scale(.985);
+  transition: opacity .16s ease, transform .16s ease;
+}
+.popup.in { opacity: 1; transform: none; }
+
+.popup-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.popup-ico {
+  width: 44px; height: 44px; border-radius: 11px; flex: 0 0 44px;
+  display: grid; place-items: center; font-size: 22px; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg, #46a0e0, #2f6fd0);
+}
+.popup-ico.warning { background: linear-gradient(135deg, #e0b34a, #c98a2a); color: #2a1c05; }
+.popup-ico.error   { background: linear-gradient(135deg, #ef6a6a, #cc3b3b); }
+.popup-meta { min-width: 0; }
+.popup-title { font-size: 19px; font-weight: 700; color: #e7eef4; }
+.popup-sub { font-family: var(--font-mono); font-size: 13px; color: #8a97a4; }
+
+/* progress step list — checks accumulate, spinner on the active step (promo mechanic) */
+.popup-steps { display: flex; flex-direction: column; gap: 2px; }
+.step { display: flex; align-items: center; gap: 14px; padding: 5px 0; }
+.step-mark {
+  width: 26px; height: 26px; border-radius: 50%; flex: 0 0 26px;
+  display: grid; place-items: center; font-size: 15px; font-weight: 700;
+  background: var(--dim); color: var(--faint);
+}
+.step.done .step-mark { background: #4fc77a; color: #06210f; }
+.step.warn .step-mark { background: var(--warn); color: #2a1c05; }
+.step.fail .step-mark { background: var(--bad); color: #fff; }
+.step.active .step-mark { background: transparent; }
+.step-text { color: var(--faint); font-size: 14px; }
+.step.active .step-text, .step.done .step-text { color: #e7eef4; }
+
+.spinner {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2.5px solid rgba(173, 198, 255, .25);
+  border-top-color: var(--primary);
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* dialog body (confirm / alert) keeps the launcher's line breaks */
+.popup-text { color: var(--muted); font-size: 14px; line-height: 1.55; white-space: pre-line; }
+
+.popup-foot { display: flex; align-items: center; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+.popup-result { flex: 1; font-size: 13px; line-height: 1.4; }
+.popup-result.good { color: var(--good); }
+.popup-result.warn { color: var(--warn); }
+.popup-result.bad  { color: var(--bad); }
+.popup-btn {
+  height: 36px; padding: 0 16px; border-radius: var(--r-md);
+  font-size: 13px; font-weight: 600; white-space: nowrap;
+  background: var(--surface-high); color: var(--text);
+  transition: background .12s;
+}
+.popup-btn.ghost:hover { background: #2c3550; }
+.popup-btn.primary { background: var(--primary); color: #fff; }
+.popup-btn.primary:hover { background: var(--primary-hover); }
+
+/* corner toasts — transient, non-blocking; warnings/errors carry no spinner */
+#toasts {
+  position: fixed; right: 20px; bottom: 20px; z-index: 90;
+  display: flex; flex-direction: column; gap: 10px; align-items: flex-end;
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  display: flex; align-items: flex-start; gap: 11px;
+  width: 340px; max-width: calc(100vw - 40px);
+  background: #101a26; border: 1px solid var(--outline); border-left: 3px solid var(--primary);
+  border-radius: var(--r-md); padding: 12px 12px 12px 14px;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .5);
+  opacity: 0; transform: translateY(8px); transition: opacity .18s, transform .18s;
+}
+.toast.in { opacity: 1; transform: none; }
+.toast.success { border-left-color: var(--good); }
+.toast.warning { border-left-color: var(--warn); }
+.toast.error   { border-left-color: var(--bad); }
+.toast-ico {
+  width: 20px; height: 20px; border-radius: 50%; flex: 0 0 20px; margin-top: 1px;
+  display: grid; place-items: center; font-size: 12px; font-weight: 700;
+}
+.toast.info .toast-ico    { background: rgba(77, 142, 255, .15); color: var(--primary-soft); }
+.toast.success .toast-ico { background: rgba(16, 185, 129, .18); color: #34d399; }
+.toast.warning .toast-ico { background: rgba(217, 164, 65, .18); color: var(--warn); }
+.toast.error .toast-ico   { background: rgba(239, 68, 68, .18); color: #f87171; }
+.toast-body { flex: 1; min-width: 0; }
+.toast-title { font-weight: 700; font-size: 13px; color: #e7eef4; }
+.toast-msg { font-size: 13px; color: var(--muted); line-height: 1.45; }
+.toast-x { color: var(--faint); font-size: 12px; padding: 0 2px; line-height: 1; }
+.toast-x:hover { color: var(--text); }
+
 /* --------------------------------------------------- Arabic / RTL */
 /* Cairo for Arabic UI; Latin (brand, account names, numbers) still uses Hanken
    Grotesk / Geist via the unicode-range split above. */
@@ -301,3 +407,9 @@ html[lang="ar"] {
 [dir="rtl"] .toggle.on .switch .knob { left: auto; right: 23px; }
 [dir="rtl"] .menu { left: auto; right: 0; }
 [dir="rtl"] .statusbar .version { margin-left: 0; margin-right: auto; }
+[dir="rtl"] #toasts { right: auto; left: 20px; align-items: flex-start; }
+[dir="rtl"] .toast { border-left: 1px solid var(--outline); border-right: 3px solid var(--primary); }
+[dir="rtl"] .toast.success { border-right-color: var(--good); }
+[dir="rtl"] .toast.warning { border-right-color: var(--warn); }
+[dir="rtl"] .toast.error { border-right-color: var(--bad); }
+[dir="rtl"] .popup-foot { justify-content: flex-start; }

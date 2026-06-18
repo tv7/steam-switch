@@ -4,7 +4,7 @@
 "use strict";
 
 const STATE = { games: [], accounts: [], current: null, version: "", logo: null, language: "en", steam_root: null };
-const UI = { view: "library", search: "", sort: "az", filter: "all", offline: false, launching: false, loaded: false };
+const UI = { view: "library", search: "", sort: "az", filter: "all", offline: false, launching: false, addingAccount: false, loaded: false };
 
 /* ----------------------------------------------------------- i18n */
 const I18N = {
@@ -37,7 +37,12 @@ const I18N = {
     "status.busyLaunch": "A launch is already in progress — please wait…",
     "status.busyAdd": "A launch is in progress — please wait…",
     "play.unmapped": "\"{name}\" isn't mapped to an account yet.\n\nIts appmanifest records no local owner — this can happen with some family-shared installs.",
+    "play.unmappedTitle": "Not mapped yet",
     "addAccount.confirm": "This closes Steam and opens its login screen so you can add another account.\n\nLog in with “Remember me” checked so SteamSwitch can switch to it later.\n\nContinue?",
+    "addAccount.title": "Add Steam account",
+    "ui.ok": "OK", "ui.cancel": "Cancel", "ui.continue": "Continue",
+    "popup.launching": "Launching", "popup.addingAccount": "Adding account",
+    "popup.loginNeeded": "Manual login needed",
   },
   ar: {
     "nav.library": "المكتبة", "nav.settings": "الإعدادات",
@@ -68,7 +73,12 @@ const I18N = {
     "status.busyLaunch": "هناك عملية تشغيل جارية بالفعل — يرجى الانتظار…",
     "status.busyAdd": "هناك عملية تشغيل جارية — يرجى الانتظار…",
     "play.unmapped": "«{name}» غير مرتبطة بأي حساب بعد.\n\nلا يسجّل ملف التعريف الخاص بها أي مالك محلي — قد يحدث هذا مع بعض ألعاب المشاركة العائلية.",
+    "play.unmappedTitle": "غير مرتبطة بعد",
     "addAccount.confirm": "سيؤدي هذا إلى إغلاق ستيم وفتح شاشة تسجيل الدخول لإضافة حساب آخر.\n\nسجّل الدخول مع تفعيل «تذكّرني» حتى يتمكن SteamSwitch من التبديل إليه لاحقًا.\n\nمتابعة؟",
+    "addAccount.title": "إضافة حساب ستيم",
+    "ui.ok": "حسنًا", "ui.cancel": "إلغاء", "ui.continue": "متابعة",
+    "popup.launching": "جارٍ التشغيل", "popup.addingAccount": "جارٍ إضافة حساب",
+    "popup.loginNeeded": "يلزم تسجيل الدخول يدويًا",
   },
 };
 const LANGS = { en: "English", ar: "العربية" };
@@ -125,13 +135,29 @@ window.onCover = ({ appid, url }) => {
   if (!url) return;
   document.querySelectorAll(`.card[data-appid="${appid}"]`).forEach(c => setCardImage(c, url));
 };
-window.onStatus = ({ text, kind }) => setStatus(text, kind);
-window.onLaunchStart = () => { UI.launching = true; $("#btn-stop").disabled = false; };
+/* Status lines are routed to the right surface:
+   - during a launch (between onLaunchStart/onLaunchDone) → a step in the launch card;
+   - during add-account → a step in that card; its terminal good/bad ends the card;
+   - otherwise → a transient toast. */
+window.onStatus = ({ text, kind }) => {
+  if (UI.launching) { Notify.step(text); return; }
+  if (UI.addingAccount) {
+    if (kind === "good") { Notify.finish("success", text); UI.addingAccount = false; }
+    else if (kind === "bad") { Notify.finish("error", text); UI.addingAccount = false; }
+    else Notify.step(text);
+    return;
+  }
+  Notify.toast(kind === "bad" ? "error" : kind === "good" ? "success" : "info", null, text);
+};
+window.onLaunchStart = ({ name } = {}) => {
+  UI.launching = true;
+  $("#btn-stop").disabled = false;
+  Notify.progress("▶", t("popup.launching"), name || "");
+};
 window.onLaunchDone = ({ ok, message, needs_login }) => {
   UI.launching = false;
   $("#btn-stop").disabled = true;
-  setStatus(message, ok ? "good" : "bad");
-  if (needs_login) alert(message);
+  Notify.finish(ok ? "success" : needs_login ? "warning" : "error", message);
 };
 
 function applyState(s) {
@@ -152,6 +178,140 @@ function setStatus(text, kind = "") {
   $("#status-text").textContent = text || "";
   $(".statusbar").classList.toggle("bad", kind === "bad");
 }
+
+/* ----------------------------------------------------- notifications
+   All user-facing messages surface inside the app (no OS alert/confirm):
+   - a promo-style centered PROGRESS card for ongoing ops (launch / add account),
+     where each status line becomes a step — spinner on the current one, green ✓
+     on the finished ones;
+   - corner TOASTS for transient messages (warnings/errors carry no spinner);
+   - centered CONFIRM / ALERT dialogs replacing window.confirm / window.alert. */
+const Notify = (() => {
+  const overlay = () => $("#overlay");
+  const toastBox = () => $("#toasts");
+
+  function openModal(card) {
+    const o = overlay();
+    o.innerHTML = "";
+    const back = el("div", "modal-backdrop");
+    back.append(card);
+    o.append(back);
+    o.classList.add("show");
+    requestAnimationFrame(() => card.classList.add("in"));
+    return card;
+  }
+  function closeModal() {
+    const o = overlay();
+    o.classList.remove("show");
+    o.innerHTML = "";
+  }
+
+  function head(icon, title, sub, iconKind) {
+    const h = el("div", "popup-head");
+    h.append(el("div", "popup-ico" + (iconKind ? " " + iconKind : ""), esc(icon)));
+    const meta = el("div", "popup-meta");
+    meta.append(el("div", "popup-title", esc(title)));
+    if (sub) meta.append(el("div", "popup-sub", esc(sub)));
+    h.append(meta);
+    return h;
+  }
+
+  /* ---- progress card (launch / add account) ---- */
+  let prog = null;   // { card, list }
+  function progress(icon, title, subtitle) {
+    const card = el("div", "popup progress");
+    const list = el("div", "popup-steps");
+    card.append(head(icon, title, subtitle), list);
+    prog = { card, list };
+    openModal(card);
+    return prog;
+  }
+  function settleActive(state) {            // close off the current spinner row
+    if (!prog) return;
+    const row = prog.list.querySelector(".step.active");
+    if (!row) return;
+    row.classList.remove("active");
+    row.classList.add(state);
+    $(".step-mark", row).innerHTML = state === "done" ? "✓" : state === "warn" ? "!" : "✕";
+  }
+  function step(text) {
+    if (!prog) return;
+    settleActive("done");
+    const row = el("div", "step active");
+    row.append(el("div", "step-mark", '<div class="spinner"></div>'),
+               el("div", "step-text", esc(text)));
+    prog.list.append(row);
+  }
+  // level: "success" | "warning" | "error"
+  function finish(level, message) {
+    if (!prog) { if (level !== "success") toast(level === "warning" ? "warning" : "error", null, message); return; }
+    settleActive(level === "success" ? "done" : level === "warning" ? "warn" : "fail");
+    const foot = el("div", "popup-foot");
+    const resCls = level === "success" ? "good" : level === "warning" ? "warn" : "bad";
+    if (message) foot.append(el("div", "popup-result " + resCls, esc(message)));
+    const btn = el("button", "popup-btn primary", esc(t("ui.ok")));
+    const done = () => { closeModal(); prog = null; };
+    btn.addEventListener("click", done);
+    foot.append(btn);
+    prog.card.append(foot);
+    if (level === "success") setTimeout(() => { if (prog && prog.card === foot.parentElement.parentElement) done(); }, 2200);
+  }
+  function active() { return prog !== null; }
+
+  /* ---- toasts ---- */
+  const TOAST_ICON = { info: "i", success: "✓", warning: "⚠", error: "✕" };
+  function toast(kind, title, msg, opts = {}) {
+    const node = el("div", "toast " + kind);
+    node.append(el("div", "toast-ico", TOAST_ICON[kind] || "i"));
+    const body = el("div", "toast-body");
+    if (title) body.append(el("div", "toast-title", esc(title)));
+    if (msg) body.append(el("div", "toast-msg", esc(msg)));
+    const x = el("button", "toast-x", "✕");
+    node.append(body, x);
+    toastBox().append(node);
+    requestAnimationFrame(() => node.classList.add("in"));
+    let timer = null;
+    const dismiss = () => { if (timer) clearTimeout(timer); node.classList.remove("in"); setTimeout(() => node.remove(), 200); };
+    x.addEventListener("click", dismiss);
+    const sticky = opts.sticky ?? (kind === "warning" || kind === "error");
+    if (!sticky) timer = setTimeout(dismiss, 3400);
+    return node;
+  }
+
+  /* ---- confirm / alert dialogs (replace window.confirm / window.alert) ---- */
+  function dialog({ icon, iconKind, title, message, buttons }) {
+    return new Promise(resolve => {
+      const card = el("div", "popup dialog");
+      card.append(head(icon, title, null, iconKind));
+      card.append(el("div", "popup-text", esc(message)));
+      const foot = el("div", "popup-foot");
+      for (const b of buttons) {
+        const btn = el("button", "popup-btn " + (b.cls || ""), esc(b.label));
+        btn.addEventListener("click", () => { closeModal(); resolve(b.value); });
+        foot.append(btn);
+      }
+      card.append(foot);
+      openModal(card);
+    });
+  }
+  function confirm({ title, message, confirmText, cancelText, icon = "?", iconKind }) {
+    return dialog({
+      icon, iconKind, title, message,
+      buttons: [
+        { label: cancelText || t("ui.cancel"), value: false, cls: "ghost" },
+        { label: confirmText || t("ui.continue"), value: true, cls: "primary" },
+      ],
+    });
+  }
+  function alert({ title, message, okText, icon = "⚠", iconKind = "warning" }) {
+    return dialog({
+      icon, iconKind, title, message,
+      buttons: [{ label: okText || t("ui.ok"), value: true, cls: "primary" }],
+    });
+  }
+
+  return { progress, step, finish, active, toast, confirm, alert, close: closeModal };
+})();
 
 /* --------------------------------------------------------- chrome render */
 function renderChrome() {
@@ -332,13 +492,13 @@ function renderSettings(c) {
 
 /* ------------------------------------------------------------- actions */
 async function play(g) {
-  if (UI.launching) { setStatus(t("status.busyLaunch"), "bad"); return; }
+  if (UI.launching) { Notify.toast("warning", null, t("status.busyLaunch")); return; }
   if (!g.mapped) {
-    alert(t("play.unmapped", { name: g.name }));
+    Notify.alert({ title: t("play.unmappedTitle"), message: t("play.unmapped", { name: g.name }) });
     return;
   }
-  const res = await call("play", g.appid, UI.offline);
-  if (res && !res.ok && res.message) setStatus(res.message, "bad");
+  const res = await call("play", g.appid, UI.offline);   // progress arrives via onLaunchStart/onStatus
+  if (res && !res.ok && res.message) Notify.toast("warning", null, res.message);
 }
 
 function setOffline(on) {
@@ -347,14 +507,21 @@ function setOffline(on) {
 }
 
 async function addAccount() {
-  if (UI.launching) { setStatus(t("status.busyAdd"), "bad"); return; }
-  if (!confirm(t("addAccount.confirm"))) return;
+  if (UI.launching) { Notify.toast("warning", null, t("status.busyAdd")); return; }
+  const ok = await Notify.confirm({
+    title: t("addAccount.title"),
+    message: t("addAccount.confirm"),
+    confirmText: t("ui.continue"),
+  });
+  if (!ok) return;
+  UI.addingAccount = true;
+  Notify.progress("＋", t("popup.addingAccount"), t("acc.addSub"));   // onStatus lines fill it in
   await call("add_account");
 }
 
 function refresh() {
-  setStatus(t("status.refreshing"));
-  call("request_state");   // onState re-renders + sets the final status
+  Notify.toast("info", null, t("status.refreshing"));
+  call("request_state");   // onState re-renders + updates the ambient status bar
 }
 
 /* ------------------------------------------------------------- filter menu */
