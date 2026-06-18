@@ -117,6 +117,7 @@ class Bridge:
         # SSE fan-out: one queue per connected client.
         self._clients: set[queue.Queue] = set()
         self._clients_lock = threading.Lock()
+        self._had_client = False               # set once the UI has ever connected
         # Last full state, replayed to clients that connect after it was built, so a
         # reconnect/refresh (or an EventSource that opens slightly late) isn't blank.
         self._last_state: dict | None = None
@@ -125,6 +126,7 @@ class Bridge:
     def add_client(self, q: queue.Queue) -> None:
         with self._clients_lock:
             self._clients.add(q)
+            self._had_client = True
             last = self._last_state
         if last is not None:                 # replay current state to the newcomer
             try:
@@ -135,6 +137,24 @@ class Bridge:
     def remove_client(self, q: queue.Queue) -> None:
         with self._clients_lock:
             self._clients.discard(q)
+
+    def start_orphan_watchdog(self, grace: float = 30.0) -> None:
+        """Self-cleanup net: if the UI has connected at least once and then stays
+        gone for `grace` seconds (the shell crashed / was force-killed, so the Rust
+        side never killed us), exit so the sidecar doesn't linger. The webview keeps
+        an EventSource open the whole time it runs and reconnects within seconds, so
+        a brief drop never trips this."""
+        def watch():
+            idle = 0.0
+            while True:
+                time.sleep(5)
+                with self._clients_lock:
+                    gone = self._had_client and not self._clients
+                idle = idle + 5 if gone else 0.0
+                if idle >= grace:
+                    _LOG.info("UI gone for %.0fs — sidecar exiting", idle)
+                    os._exit(0)
+        threading.Thread(target=watch, name="orphan-watchdog", daemon=True).start()
 
     def _push(self, fn: str, payload) -> None:
         """Broadcast an event to all connected clients (fire-and-forget)."""
@@ -464,6 +484,7 @@ def main():
     args = ap.parse_args()
 
     bridge = Bridge()
+    bridge.start_orphan_watchdog()
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)
     httpd.daemon_threads = True
     httpd.bridge = bridge          # the handler reaches the bridge via self.server

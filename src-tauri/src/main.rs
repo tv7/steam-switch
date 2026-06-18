@@ -17,10 +17,26 @@ use std::io::{BufRead, BufReader};
 use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
 
-use tauri::{Manager, WebviewUrl, WebviewWindowBuilder, WindowEvent};
+use tauri::{Manager, RunEvent, WebviewUrl, WebviewWindowBuilder};
 
 /// Holds the sidecar child so we can kill it on exit.
 struct Sidecar(Mutex<Option<Child>>);
+
+/// Kill the sidecar AND its children. server.exe is a PyInstaller onefile binary —
+/// a bootloader that runs the real server as a child — so killing only the process
+/// we spawned would orphan that child. On Windows, taskkill /T kills the whole tree.
+fn kill_sidecar(mut child: Child) {
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        let _ = Command::new("taskkill")
+            .args(["/PID", &child.id().to_string(), "/T", "/F"])
+            .creation_flags(CREATE_NO_WINDOW)
+            .status();
+    }
+    let _ = child.kill(); // fallback / non-Windows
+}
 
 /// Build the command that starts the sidecar. Dev runs the Python source from the
 /// repo root; release runs the bundled `server[.exe]` next to the app executable.
@@ -110,17 +126,19 @@ fn main() {
                 .build()?;
             Ok(())
         })
-        .on_window_event(|window, event| {
-            if matches!(event, WindowEvent::Destroyed) {
-                if let Some(state) = window.try_state::<Sidecar>() {
+        .build(tauri::generate_context!())
+        .expect("error while building SteamSwitch")
+        .run(|app, event| {
+            // RunEvent::Exit fires once when the app is shutting down (last window
+            // closed) — kill the sidecar tree there so server.exe doesn't linger.
+            if let RunEvent::Exit = event {
+                if let Some(state) = app.try_state::<Sidecar>() {
                     if let Ok(mut guard) = state.0.lock() {
-                        if let Some(mut child) = guard.take() {
-                            let _ = child.kill();
+                        if let Some(child) = guard.take() {
+                            kill_sidecar(child);
                         }
                     }
                 }
             }
-        })
-        .run(tauri::generate_context!())
-        .expect("error while running SteamSwitch");
+        });
 }
