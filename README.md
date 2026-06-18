@@ -6,7 +6,7 @@ manual account swapping. Optional "launch offline" toggle.
 
 ## ⬇️ Download
 
-**Grab the latest release → [github.com/tv7/steam-switch/releases](https://github.com/tv7/steam-switch/releases/latest)**
+**Grab the latest release → [Releases](https://github.com/tv7/steam-switch/releases/latest)**
 
 Download the portable **`SteamSwitch.exe`**, double-click, and you're running —
 no Python, no installer, nothing to set up. Windows only for now.
