@@ -1,69 +1,75 @@
-"""Build a single portable executable — no Python, no install needed to run it.
+"""Build the SteamSwitch release — the Python sidecar + the Tauri app.
 
-Usage (run once on the machine matching your target OS):
+Steps:
+  1. python build_sidecar.py   -> dist/server[.exe]            (PyInstaller)
+  2. cargo tauri build         -> src-tauri/target/release/...  (Tauri/Rust)
+  3. copy the sidecar next to each built SteamSwitch executable, so the release
+     finds it at runtime (main.rs looks for `server[.exe]` beside the app exe).
 
-    python build.py
+Prereqs (one-time, see src-tauri/README.md):
+  * Rust + the Tauri CLI:  cargo install tauri-cli --version "^2"
+  * Python + PyInstaller:  pip install pyinstaller
+  * App icons:             cargo tauri icon assets/steamswitch.png
 
-Produces:  dist/SteamSwitch.exe   (Windows)
-           dist/SteamSwitch       (Linux/macOS)
-
-PyInstaller can't cross-compile, so build the Windows .exe on Windows.
-This script installs PyInstaller + pywebview + Pillow into the *current* Python
-if missing (only needed to build; the resulting exe is self-contained).
+PyInstaller and Tauri both can't cross-compile — run this on the target OS.
+(The old pywebview build lived here; the app is now Tauri + a Python sidecar.)
 """
 
-import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
+EXE = ".exe" if sys.platform.startswith("win") else ""
 
 
-def ensure(pkg):
-    try:
-        __import__(pkg.split("==")[0].replace("-", "_").lower())
-    except ImportError:
-        print(f"Installing build dependency: {pkg}")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", pkg])
+def run(cmd, **kw):
+    print(">>", " ".join(str(c) for c in cmd))
+    subprocess.check_call(cmd, **kw)
 
 
 def main():
-    ensure("PyInstaller")
-    ensure("pywebview")
-    ensure("Pillow")          # only used to (re)generate the icon assets below
+    # 1. sidecar -------------------------------------------------------------
+    run([sys.executable, str(ROOT / "build_sidecar.py")])
+    sidecar = ROOT / "dist" / ("server" + EXE)
+    if not sidecar.exists():
+        sys.exit(f"Sidecar not found at {sidecar} — build_sidecar.py failed?")
 
-    # Make sure the logo/icon assets exist (they're drawn with Pillow).
-    assets = ROOT / "assets"
-    icon = assets / "steamswitch.ico"
-    if not icon.exists():
-        subprocess.check_call([sys.executable, str(assets / "make_icon.py")])
+    # 2. tauri ---------------------------------------------------------------
+    cargo = shutil.which("cargo")
+    if not cargo:
+        sys.exit("`cargo` not found. Install Rust (https://rustup.rs) and the Tauri CLI:\n"
+                 '    cargo install tauri-cli --version "^2"\n'
+                 "See src-tauri/README.md.")
+    run([cargo, "tauri", "build"], cwd=ROOT)
 
-    name = "SteamSwitch"
-    cmd = [
-        sys.executable, "-m", "PyInstaller",
-        "--onefile",
-        "--windowed",            # no console window
-        "--name", name,
-        "--noconfirm",
-        "--clean",
-        # bundle the icon + web assets so the app can load them at runtime, and
-        # pull in pywebview's platform backends (on Windows the Edge WebView2
-        # backend needs pythonnet/clr).
-        "--add-data", f"{assets}{os.pathsep}assets",
-        "--add-data", f"{ROOT / 'web'}{os.pathsep}web",
-        "--collect-all", "webview",
-    ]
-    if icon.exists():
-        cmd += ["--icon", str(icon)]
-    cmd.append(str(ROOT / "webapp.py"))
-    print("Running:", " ".join(cmd))
-    subprocess.check_call(cmd, cwd=ROOT)
+    # 3. place the sidecar next to every built SteamSwitch executable --------
+    rel = ROOT / "src-tauri" / "target" / "release"
+    placed = []
+    if rel.is_dir():
+        for exe_name in ("steamswitch" + EXE, "SteamSwitch" + EXE):
+            cand = rel / exe_name
+            if cand.exists():
+                dst = rel / sidecar.name
+                shutil.copy2(sidecar, dst)
+                placed.append(dst)
+                break
+        # bundled app folders (portable / installer payloads)
+        bundle = rel / "bundle"
+        if bundle.is_dir():
+            for exe in list(bundle.rglob("SteamSwitch" + EXE)) + list(bundle.rglob("steamswitch" + EXE)):
+                dst = exe.parent / sidecar.name
+                shutil.copy2(sidecar, dst)
+                placed.append(dst)
 
-    out = ROOT / "dist" / (name + (".exe" if sys.platform.startswith("win") else ""))
-    print("\nDone. Portable executable:")
-    print("   ", out)
-    print("\nCopy that single file anywhere and double-click to run.")
+    print("\nDone. Sidecar placed next to:")
+    for p in placed:
+        print("   ", p)
+    if not placed:
+        print("   (couldn't locate the built exe — copy", sidecar, "next to it manually)")
+    print("\nThe portable app is the SteamSwitch executable + server" + EXE + " together.")
+    print("Run it and confirm it works; report the exact output paths if the layout differs.")
 
 
 if __name__ == "__main__":

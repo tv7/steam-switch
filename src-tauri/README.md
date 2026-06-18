@@ -38,21 +38,20 @@ just need Python + the `core/` deps (stdlib only). Edit `web/*` and reload.
 
 ## Build a release
 
-```
-python build_sidecar.py          # -> dist/server.exe
-cargo tauri build                # -> src-tauri/target/release/bundle/...
-```
-
-Then place the sidecar next to the app executable so `main.rs` (release) can find
-it:
+One command from the repo root does all three steps (build the sidecar, build the
+Tauri app, and copy the sidecar next to each built executable):
 
 ```
-copy dist\server.exe  <the folder containing SteamSwitch.exe>
+python build.py
 ```
 
-(For a polished installer, wire `server.exe` in as a Tauri **resource** or
-**externalBin** so it's bundled automatically — a follow-up; the copy step works
-for now.)
+It prints where it placed `server[.exe]`. The portable app is **the SteamSwitch
+executable + `server.exe` together** — distribute them in the same folder.
+
+(For a polished single-file installer later, wire `server.exe` in as a Tauri
+**externalBin** so it's bundled automatically. Not done yet because declaring
+externalBin would require the sidecar binary to exist before `cargo tauri dev` runs,
+and dev currently needs only Python. The copy step keeps dev friction-free.)
 
 ## Notes
 
