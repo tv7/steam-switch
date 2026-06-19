@@ -52,6 +52,33 @@ def build_fake_steam(root: Path):
     bob_accountid = 76561198000000002 - 76561197960265728
     (root / "userdata" / str(bob_accountid) / "730").mkdir(parents=True)
 
+    # 999 is a family share BOTH local accounts have run (each has a userdata
+    # folder) -> ambiguous by folder alone. Bob actually plays it (more playtime),
+    # alice just launched it once -> account_for_game must pick bob via playtime.
+    # localconfig casing is varied on purpose to exercise the case-insensitive read.
+    (root / "steamapps" / "appmanifest_999.acf").write_text(
+        '"AppState"\n{\n\t"appid"\t\t"999"\n\t"name"\t\t"Shared Game"\n'
+        '\t"StateFlags"\t\t"4"\n\t"installdir"\t\t"shared"\n'
+        '\t"LastOwner"\t\t"76561198999999999"\n}\n'
+    )
+    alice_accountid = 76561198000000001 - 76561197960265728
+    (root / "userdata" / str(alice_accountid) / "999").mkdir(parents=True)
+    (root / "userdata" / str(bob_accountid) / "999").mkdir(parents=True)
+    (root / "userdata" / str(alice_accountid) / "config").mkdir(parents=True)
+    (root / "userdata" / str(bob_accountid) / "config").mkdir(parents=True)
+    (root / "userdata" / str(alice_accountid) / "config" / "localconfig.vdf").write_text(
+        '"UserLocalConfigStore"\n{\n\t"Software"\n\t{\n\t\t"Valve"\n\t\t{\n'
+        '\t\t\t"steam"\n\t\t\t{\n\t\t\t\t"apps"\n\t\t\t\t{\n\t\t\t\t\t"999"\n'
+        '\t\t\t\t\t{\n\t\t\t\t\t\t"Playtime"\t\t"5"\n\t\t\t\t\t}\n'
+        '\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}\n'
+    )
+    (root / "userdata" / str(bob_accountid) / "config" / "localconfig.vdf").write_text(
+        '"UserLocalConfigStore"\n{\n\t"Software"\n\t{\n\t\t"Valve"\n\t\t{\n'
+        '\t\t\t"Steam"\n\t\t\t{\n\t\t\t\t"apps"\n\t\t\t\t{\n\t\t\t\t\t"999"\n'
+        '\t\t\t\t\t{\n\t\t\t\t\t\t"Playtime"\t\t"600"\n\t\t\t\t\t}\n'
+        '\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}\n'
+    )
+
     # config.vdf with the account picker turned OFF — switching must turn it back
     # ON, since the picker click is what logs these accounts in.
     (root / "config" / "config.vdf").write_text(
@@ -108,7 +135,8 @@ def main():
         print("games:")
         found = games.installed_games()
         names = {g.name for g in found}
-        check("finds all games", names == {"Team Fortress 2", "Dota 2", "Counter-Strike 2"})
+        check("finds all games",
+              names == {"Team Fortress 2", "Dota 2", "Counter-Strike 2", "Shared Game"})
         tf2 = next(g for g in found if g.name == "Team Fortress 2")
         check("cover url uses appid", "440" in tf2.cover_url())
 
@@ -122,11 +150,13 @@ def main():
         omap = accounts.local_owner_map(refresh=True)
         check("LastOwner mapped for owned games",
               omap == {440: "76561198000000001", 570: "76561198000000002",
-                       730: "76561198999999999"})
+                       730: "76561198999999999", 999: "76561198999999999"})
         check("account_for_game uses LastOwner",
               accounts.account_for_game(570) == "76561198000000002")
         check("family-shared game maps to local player via userdata",
               accounts.account_for_game(730) == "76561198000000002")
+        check("ambiguous family share resolves to the account with more playtime",
+              accounts.account_for_game(999) == "76561198000000002")
         accounts.set_override(570, "76561198000000001")
         check("manual override beats LastOwner",
               accounts.account_for_game(570) == "76561198000000001")
