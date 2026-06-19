@@ -118,6 +118,57 @@ def userdata_owner_map(root: Path | None = None, *, refresh: bool = False) -> di
     return out
 
 
+def _ci_get(node, key):
+    """Case-insensitive dict lookup (localconfig.vdf casing varies by Steam
+    version: 'Steam'/'steam', 'apps', 'Playtime', ...)."""
+    if not isinstance(node, dict):
+        return None
+    if key in node:
+        return node[key]
+    kl = key.lower()
+    for k, v in node.items():
+        if k.lower() == kl:
+            return v
+    return None
+
+
+def app_usage(appid: int, steamid64: str, root: Path | None = None) -> tuple[int, int, float]:
+    """How much this account uses `appid`: (total_playtime_minutes, last_played_unix,
+    userdata_folder_mtime). Read from userdata/<accountid>/config/localconfig.vdf
+    (Software/Valve/Steam/apps/<appid>); the folder mtime is a fallback signal when
+    localconfig has no entry. All zero if unknown. Used to break ties when several
+    local accounts have the same (e.g. family-shared) game."""
+    root = root or steam_paths.steam_root()
+    if not root:
+        return (0, 0, 0.0)
+    accountid32 = int(steamid64) - STEAMID64_BASE
+    playtime = last_played = 0
+    cfg = root / "userdata" / str(accountid32) / "config" / "localconfig.vdf"
+    if cfg.exists():
+        try:
+            node = vdf.load(cfg)
+            for key in ("UserLocalConfigStore", "Software", "Valve", "Steam", "apps", str(appid)):
+                node = _ci_get(node, key)
+                if node is None:
+                    break
+            if isinstance(node, dict):
+                try:
+                    playtime = int(_ci_get(node, "Playtime") or 0)
+                except (TypeError, ValueError):
+                    playtime = 0
+                try:
+                    last_played = int(_ci_get(node, "LastPlayed") or 0)
+                except (TypeError, ValueError):
+                    last_played = 0
+        except Exception:
+            pass
+    try:
+        mtime = (root / "userdata" / str(accountid32) / str(appid)).stat().st_mtime
+    except OSError:
+        mtime = 0.0
+    return (playtime, last_played, mtime)
+
+
 # ---------------------------------------------------------------------------
 # Mapping store: { "api_keys": {steamid64: key}, "overrides": {appid: steamid64},
 #                  "owned": {steamid64: [appid, ...]} }
@@ -183,9 +234,12 @@ def account_for_game(appid: int, accounts: list[Account] | None = None) -> str |
     Order of preference:
       1. manual override (always wins);
       2. LastOwner, when it's an account logged in on this PC (normal case);
-      3. userdata folder owner, when exactly one local account has run the game
-         (this is what catches family-shared games, whose LastOwner is the
-         lender rather than the local player);
+      3. userdata folder owner — the local account(s) that have the game in their
+         library and have run it (catches family-shared games, whose LastOwner is
+         the lender rather than the local player). If several local accounts have
+         run it (e.g. both borrowed the same family share), pick the one that
+         actually plays it — most total playtime, then most-recently-played, then
+         most-recently-touched folder — instead of giving up;
       4. cached Web-API ownership, if present (legacy fallback).
 
     Returns None when nothing maps — e.g. a family-shared game whose owner isn't
@@ -205,6 +259,12 @@ def account_for_game(appid: int, accounts: list[Account] | None = None) -> str |
     # LastOwner missing or not a local account (family share): use userdata.
     players = [sid for sid in userdata_owner_map().get(appid, []) if sid in local_ids]
     if len(players) == 1:
+        return players[0]
+    if len(players) > 1:
+        # Several local accounts have run it (e.g. both borrowed the family share).
+        # The account you actually play it on owns the most playtime; fall back to
+        # last-played then folder mtime, so ties still resolve deterministically.
+        players.sort(key=lambda sid: app_usage(appid, sid), reverse=True)
         return players[0]
 
     for steamid64, appids in m["owned"].items():
