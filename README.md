@@ -1,8 +1,16 @@
 # SteamSwitch
 
-A native desktop window that lists every game installed on this PC. Click a game
-and it switches to the Steam account that owns it, logs in, and launches — no
-manual account swapping. Optional "launch offline" toggle.
+**Click a game and it instantly switches to the Steam account that owns it, logs in, and launches — no manual account swapping.**
+
+![SteamSwitch in action: clicking a game's cover art switches accounts and launches it](assets/demo.gif)
+
+> Click *Grand Theft Auto V* → SteamSwitch swaps to the account that owns it, logs in, and the game opens. One click, no account picker, no retyping logins.
+
+Most Steam account switchers are *account-first*: you pick an account, log in, then go find your game. SteamSwitch is *game-first* — it maps every installed game to its owning account automatically (read from Steam's local data, no API key), so you just click what you want to play. Plus a one-click **launch offline** toggle that handles Steam's offline-mode dance for you.
+
+- **No password handling** — it never types or stores your password; it rides Steam's own saved-login tokens ("Remember me"), so it's as safe as Steam's normal login.
+- **Safe by default** — backs up `loginusers.vdf` before the first write; all data stays local.
+- **Windows 10/11** for now — Linux account switching is the next phase.
 
 ## ⬇️ Download
 
