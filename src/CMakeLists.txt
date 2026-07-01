@@ -21,9 +21,12 @@ set(CORE_SOURCES
     core/covers.cpp
     core/epic_games.cpp
     core/gog_games.cpp
+    core/xbox_games.cpp
+    core/sha256.cpp
     core/stores/steam_store.cpp
     core/stores/epic_store.cpp
     core/stores/gog_store.cpp
+    core/stores/xbox_store.cpp
 )
 if(WIN32)
     list(APPEND CORE_SOURCES core/platform_win.cpp)

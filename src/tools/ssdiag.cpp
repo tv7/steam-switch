@@ -8,6 +8,7 @@
 //   ssdiag accounts   ~ python -m core.accounts   (mapping + how each game resolved)
 //   ssdiag epic         list installed Epic games + their launch URIs
 //   ssdiag gog          list installed GOG games + their launch commands
+//   ssdiag xbox         list installed Xbox/Game Pass games + their AUMIDs
 //   ssdiag covers <id>  resolve one cover (prints byte count / source)
 //
 // Build with the core sources + platform_{win,posix}.cpp.
@@ -16,6 +17,7 @@
 #include "../core/epic_games.h"
 #include "../core/gog_games.h"
 #include "../core/model.h"
+#include "../core/xbox_games.h"
 #include "../core/steam_accounts.h"
 #include "../core/steam_games.h"
 #include "../core/steam_paths.h"
@@ -106,6 +108,20 @@ static void cmdGog() {
     }
 }
 
+static void cmdXbox() {
+    std::printf("Xbox install roots:\n");
+    auto roots = xbox::installRoots();
+    if (roots.empty()) std::printf("  (none — set $SS_XBOX_ROOTS or install a Game Pass game)\n");
+    for (const auto& r : roots) std::printf("  - %s\n", r.c_str());
+    std::printf("\n");
+    auto games = xbox::installedGames();
+    if (games.empty()) { std::printf("(no installed Xbox games found)\n"); return; }
+    for (const auto& g : games)
+        std::printf("%-40s\n    AUMID: %s\n    dir:   %s\n",
+                    g.name.c_str(), g.launchId.c_str(), g.installdir.c_str());
+    std::printf("\nTip: cross-check an AUMID against PowerShell `get-StartApps`.\n");
+}
+
 static void cmdCovers(int64_t appid) {
     auto bytes = covers::coverBytes(appid);
     if (bytes) std::printf("cover %lld: %zu bytes\n", (long long)appid, bytes->size());
@@ -119,7 +135,8 @@ int main(int argc, char** argv) {
     else if (cmd == "accounts") cmdAccounts();
     else if (cmd == "epic") cmdEpic();
     else if (cmd == "gog") cmdGog();
+    else if (cmd == "xbox") cmdXbox();
     else if (cmd == "covers" && argc > 2) cmdCovers(std::stoll(argv[2]));
-    else { std::printf("usage: ssdiag [paths|games|accounts|epic|gog|covers <appid>]\n"); return 2; }
+    else { std::printf("usage: ssdiag [paths|games|accounts|epic|gog|xbox|covers <appid>]\n"); return 2; }
     return 0;
 }

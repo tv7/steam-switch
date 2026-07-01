@@ -9,7 +9,7 @@ repo `CLAUDE.md`); the other stores (Epic/GOG/Xbox) are added on top.
 
 | Path | Role |
 |------|------|
-| `core/` | Pure C++ engine, **no Qt** — headless + unit-testable. VDF/JSON parsers, OS platform layer, Steam paths/games/accounts/switcher/launcher/covers, Epic enumeration (`epic_games.*`), GOG registry enumeration (`gog_games.*`), the `IStore` interface + `SteamStore`/`EpicStore`/`GogStore`. |
+| `core/` | Pure C++ engine, **no Qt** — headless + unit-testable. VDF/JSON parsers, SHA-256 (`sha256.*`), OS platform layer, Steam paths/games/accounts/switcher/launcher/covers, Epic (`epic_games.*`), GOG registry (`gog_games.*`) and Xbox/Game Pass (`xbox_games.*`) enumeration, the `IStore` interface + `SteamStore`/`EpicStore`/`GogStore`/`XboxStore`. |
 | `core/platform_{win,posix}.cpp` | OS specifics: registry, process control, `EnumWindows`, `ShellExecute`/`xdg-open`. Windows is the real one; POSIX mirrors the Python stubs. |
 | `core/http.{h,cpp}` | Injectable HTTP — the host installs a fetcher so `core/` stays Qt-free (the Qt UI installs a `QNetwork` one; tests inject a stub). |
 | `ui/` | Qt 6 + QML. `Backend` (the in-process replacement for `server.py`+`bridge.js`), `GameModel`, `QtFetcher`, and `qml/` views. |
@@ -87,8 +87,19 @@ is already byte-identical.)
   platform primitives: `regSubKeys()` (registry enumeration) and a
   working-directory `spawnDetached()` overload. Registry-only ⇒ empty off-Windows;
   the pure Game/argv builders are unit-tested. Verify with `ssdiag gog`.
+- **Xbox / Game Pass store — done + tested headless:** `core/xbox_games.*`
+  enumerates installed titles by scanning the Xbox install roots
+  (`<drive>:\XboxGames`, override `$SS_XBOX_ROOTS`) for each game's
+  `Content\MicrosoftGame.config`, then computes the launch **AUMID**
+  (`PackageFamilyName!AppId`) — the PackageFamilyName's publisher hash comes from
+  `core/sha256.*` + a base32, so no WinRT/PackageManager dependency. Launch is
+  `explorer shell:AppsFolder\<AUMID>` (UWP titles are license-gated, so — unlike GOG
+  — the exe can't be run directly). The publisher-hash pipeline is unit-tested
+  against Microsoft's well-known `8wekyb3d8bbwe`. Verify with `ssdiag xbox` and
+  cross-check AUMIDs against PowerShell `get-StartApps`.
 - **Written, builds on Windows w/ Qt (not yet run here — no Qt/display in sandbox):**
   the Qt/QML UI (grid, covers, search/filter, accounts hub, launch/cancel, offline,
   RTL scaffolding), settings/language persistence, store-routed launching.
-- **Next:** Xbox / Game Pass store (implement `IStore`), then `windeployqt`
-  portable-zip packaging, then retire the Python/Tauri stack.
+- **All four stores done.** **Next:** `windeployqt` portable-zip packaging, then
+  retire the Python/Tauri stack. (Per-store cover art + a multi-store-first UI are
+  the redesign.)

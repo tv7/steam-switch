@@ -49,7 +49,7 @@ Backend::Backend(QObject* parent) : QObject(parent) {
     stores_.push_back(makeSteamStore());
     stores_.push_back(makeEpicStore());
     stores_.push_back(makeGogStore());
-    // Xbox store gets pushed here in a later phase.
+    stores_.push_back(makeXboxStore());
     pool_.setMaxThreadCount(6);
     language_ = QString::fromStdString(settings::language());
 }

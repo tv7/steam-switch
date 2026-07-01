@@ -39,6 +39,6 @@ public:
 std::unique_ptr<IStore> makeSteamStore();
 std::unique_ptr<IStore> makeEpicStore();
 std::unique_ptr<IStore> makeGogStore();
-// makeXboxStore() lands in a later phase.
+std::unique_ptr<IStore> makeXboxStore();
 
 }  // namespace ss
