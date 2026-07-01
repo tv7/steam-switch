@@ -1,0 +1,78 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="m1base.css">
+<style>
+.glow{position:fixed;width:800px;height:500px;right:-260px;bottom:-220px;border-radius:50%;background:#33230e;filter:blur(150px);opacity:.5}
+.wrap{padding:96px 44px 0;max-width:860px}
+h1{font:700 30px 'Space Grotesk';margin-bottom:6px}
+.sub{font-size:13px;color:var(--mut);font-weight:600;margin-bottom:26px}
+.sect{font-size:11px;letter-spacing:.2em;color:var(--faint);font-weight:800;margin:24px 0 12px}
+.card{border-radius:16px;background:var(--panel);border:1px solid var(--line);overflow:hidden}
+.row{display:flex;align-items:center;gap:16px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:none}
+.row .t{font-weight:800;font-size:13.5px}
+.row .d{font-size:11.5px;color:var(--faint);font-weight:600;margin-top:2px;max-width:520px;line-height:1.5}
+.right{margin-left:auto}
+.tog{width:46px;height:26px;border-radius:13px;position:relative}
+.tog.on{background:var(--acc1)}
+.tog.off{background:rgba(255,255,255,.13)}
+.tog i{position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;display:block}
+.tog.on i{right:3px}.tog.off i{left:3px;background:#7b8496}
+.seg{display:flex;border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.seg div{padding:8px 16px;font-size:12.5px;font-weight:700;color:var(--faint)}
+.seg .on{background:rgba(255,255,255,.1);color:var(--txt)}
+.btn{height:36px;padding:0 16px;border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.05);display:flex;align-items:center;font-size:12.5px;font-weight:700}
+.note{font-size:11px;color:var(--faint);font-weight:600;line-height:1.6;margin-top:14px;max-width:640px}
+</style></head><body>
+<div class="glow"></div>
+<div class="top">
+  <div class="logo disp">OR<b>B</b>IT</div>
+  <div class="tabs"><div class="tab">Library</div><div class="tab">Accounts</div><div class="tab on">Settings</div></div>
+  <div class="search">⌕ &nbsp;Search 22 games… <span class="kbd" style="margin-left:auto">Ctrl K</span></div>
+  <div class="spacer"></div>
+  <div class="pill"><span class="dot" style="background:var(--xbox)"></span>Steam online · x_05</div>
+  <div class="avatar">L</div>
+</div>
+<div class="wrap">
+  <h1 class="disp">Settings</h1>
+  <div class="sub">Preferences persist in settings.json next to the app.</div>
+
+  <div class="sect">LAUNCHING</div>
+  <div class="card">
+    <div class="row">
+      <div><div class="t">Launch offline by default</div><div class="d">New launches bring Steam up offline after a brief sign-in — shared-account friendly, cloud saves untouched.</div></div>
+      <div class="right"><div class="tog on"><i></i></div></div>
+    </div>
+    <div class="row">
+      <div><div class="t">Confirm before switching accounts</div><div class="d">Ask before Steam is closed and restarted on another account.</div></div>
+      <div class="right"><div class="tog off"><i></i></div></div>
+    </div>
+  </div>
+
+  <div class="sect">INTERFACE</div>
+  <div class="card">
+    <div class="row">
+      <div><div class="t">Language</div><div class="d">Display language — العربية flips the whole layout right-to-left.</div></div>
+      <div class="right"><div class="seg"><div class="on">English</div><div>العربية</div></div></div>
+    </div>
+    <div class="row">
+      <div><div class="t">Hero banner</div><div class="d">What the big banner shows when the library opens.</div></div>
+      <div class="right"><div class="seg"><div class="on">Last played</div><div>Random pick</div></div></div>
+    </div>
+  </div>
+
+  <div class="sect">LIBRARY</div>
+  <div class="card">
+    <div class="row">
+      <div><div class="t">Rescan library</div><div class="d">Re-detect installed games and accounts across all stores. Last scan: 2 minutes ago.</div></div>
+      <div class="right"><div class="btn">⟳ &nbsp;Rescan now</div></div>
+    </div>
+    <div class="row">
+      <div><div class="t">Cover art cache</div><div class="d">Downloaded covers are cached on disk so store APIs are hit at most once per game. 21 MB.</div></div>
+      <div class="right"><div class="btn">Clear cache</div></div>
+    </div>
+  </div>
+
+  <div class="note">Tip: if every account is your own, Steam Families may remove the need to switch at all. ORBIT never types passwords — accounts must be signed in once with “Remember me”.</div>
+</div>
+</body></html>

@@ -1,0 +1,97 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0c11;--panel:rgba(255,255,255,.045);--line:rgba(255,255,255,.09);--txt:#eef1f7;--mut:#98a0b3;--faint:#5c657a;
+--steam:#66c0f4;--epic:#a78bfa;--gog:#c084fc;--xbox:#4ade80;--acc1:#f59e0b;--acc2:#f472b6}
+*{margin:0;box-sizing:border-box}body{background:var(--bg);color:var(--txt);font-family:Manrope;width:1440px;height:900px;overflow:hidden}
+.disp{font-family:'Space Grotesk'}
+/* top bar */
+.top{position:fixed;inset:0 0 auto 0;height:64px;display:flex;align-items:center;gap:18px;padding:0 28px;z-index:9;
+background:linear-gradient(180deg,rgba(10,12,17,.92),rgba(10,12,17,0))}
+.logo{font:700 19px 'Space Grotesk';letter-spacing:.14em}
+.logo b{color:var(--acc1)}
+.search{flex:0 1 420px;margin-left:26px;height:38px;border-radius:19px;background:rgba(255,255,255,.06);border:1px solid var(--line);
+display:flex;align-items:center;gap:10px;padding:0 16px;color:var(--faint);font-size:13px}
+.spacer{flex:1}
+.pill{height:34px;border-radius:17px;border:1px solid var(--line);background:rgba(255,255,255,.05);display:flex;align-items:center;gap:8px;padding:0 14px;font-size:12.5px;color:var(--mut);font-weight:600}
+.dot{width:8px;height:8px;border-radius:50%}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#1a1205}
+/* hero */
+.hero{position:relative;height:430px}
+.hero img{width:100%;height:100%;object-fit:cover;object-position:center 30%}
+.hero .fade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,12,17,.25) 0%,rgba(10,12,17,.05) 35%,rgba(10,12,17,.92) 88%,var(--bg) 100%),linear-gradient(90deg,rgba(10,12,17,.85),rgba(10,12,17,0) 55%)}
+.hero .info{position:absolute;left:44px;bottom:34px;max-width:640px}
+.kick{font-size:11px;letter-spacing:.22em;font-weight:800;color:var(--xbox);margin-bottom:10px}
+.hero h1{font:700 44px/1.04 'Space Grotesk';margin-bottom:12px}
+.meta{display:flex;gap:8px;margin-bottom:20px}
+.chip{font-size:11.5px;font-weight:700;padding:5px 11px;border-radius:99px;border:1px solid var(--line);background:rgba(255,255,255,.07);color:var(--mut)}
+.chip.gr{color:#0c2913;background:var(--xbox);border-color:transparent}
+.btns{display:flex;gap:12px;align-items:center}
+.play{height:46px;padding:0 26px;border-radius:23px;background:#fff;color:#0b0d12;font:800 14.5px Manrope;display:flex;align-items:center;gap:10px}
+.ghost{height:46px;padding:0 20px;border-radius:23px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.06);color:var(--txt);font:700 13.5px Manrope;display:flex;align-items:center}
+.hint{font-size:12px;color:var(--faint);margin-top:12px}
+/* shelves */
+.shelves{padding:6px 44px}
+.shelf{margin-bottom:22px}
+.shelf h2{font:600 15px 'Space Grotesk';display:flex;align-items:center;gap:10px;margin-bottom:12px;color:var(--txt)}
+.shelf h2 .n{color:var(--faint);font:600 12px Manrope}
+.shelf h2 .all{margin-left:auto;color:var(--faint);font:600 12px Manrope}
+.row{display:flex;gap:14px}
+.card{width:132px}
+.cov{width:132px;height:176px;border-radius:12px;overflow:hidden;position:relative;background:linear-gradient(160deg,#232a3a,#11141d);border:1px solid var(--line)}
+.cov img{width:100%;height:100%;object-fit:cover}
+.cov .own{position:absolute;inset:auto 0 0 0;padding:18px 8px 6px;background:linear-gradient(180deg,transparent,rgba(5,6,9,.88));display:flex;align-items:center;gap:5px;font-size:9.5px;font-weight:700;color:#cdd4e2}
+.card .t{margin-top:7px;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .s{font-size:10.5px;color:var(--faint);font-weight:600;margin-top:1px}
+.prog{position:absolute;top:8px;left:8px;font-size:9px;font-weight:800;background:rgba(5,6,9,.75);border-radius:6px;padding:3px 7px;color:var(--xbox)}
+</style></head><body>
+<div class="hero">
+  <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1808500/library_hero.jpg"
+       onerror="this.src='https://cdn.cloudflare.steamstatic.com/steam/apps/1808500/library_hero.jpg'">
+  <div class="fade"></div>
+  <div class="info">
+    <div class="kick">XBOX GAME PASS · READY TO PLAY</div>
+    <h1>ARC Raiders</h1>
+    <div class="meta"><span class="chip gr">Installed</span><span class="chip">Launches via Xbox app</span><span class="chip">Last played yesterday</span></div>
+    <div class="btns">
+      <div class="play">▶&nbsp; Play now</div>
+      <div class="ghost">⏱ &nbsp;Play offline</div>
+    </div>
+    <div class="hint">No account switch needed — launches straight through Game Pass.</div>
+  </div>
+</div>
+<div class="top">
+  <div class="logo disp">OR<b>B</b>IT</div>
+  <div class="search">⌕ &nbsp;Search 22 games… &nbsp;<span style="margin-left:auto;border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:10px">Ctrl K</span></div>
+  <div class="spacer"></div>
+  <div class="pill"><span class="dot" style="background:var(--xbox)"></span>Steam online</div>
+  <div class="pill">Offline mode &nbsp;<span style="width:26px;height:15px;border-radius:8px;background:rgba(255,255,255,.14);position:relative"><span style="position:absolute;left:2px;top:2px;width:11px;height:11px;border-radius:50%;background:#7b8496"></span></span></div>
+  <div class="avatar">L</div>
+</div>
+<div class="shelves">
+  <div class="shelf">
+    <h2 class="disp">Continue playing <span class="all">View all ›</span></h2>
+    <div class="row">
+      <div class="card"><div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1172470/library_600x900.jpg"><div class="own"><span class="dot" style="width:6px;height:6px;background:var(--acc1)"></span>x_05</div></div><div class="t">Apex Legends</div><div class="s">Steam · 214 h</div></div>
+      <div class="card"><div class="cov"><img src="https://cdn1.epicgames.com/item/fn/FNBR_41-00_C7S3_EGS_Launcher_Blade_1200x1600_1200x1600-1cd8e8a10f834e4a98bf3237c32761b5"><div class="own"><span class="dot" style="width:6px;height:6px;background:var(--epic)"></span>Epic</div></div><div class="t">Fortnite</div><div class="s">Epic · 88 h</div></div>
+      <div class="card"><div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1903340/library_600x900.jpg"><div class="own"><span class="dot" style="width:6px;height:6px;background:var(--acc1)"></span>x_05</div></div><div class="t">Clair Obscur: Exp. 33</div><div class="s">Steam · 41 h</div></div>
+      <div class="card"><div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3321460/library_600x900.jpg"><div class="own"><span class="dot" style="width:6px;height:6px;background:var(--acc2)"></span>katscrimson3</div></div><div class="t">Crimson Desert</div><div class="s">Steam · shared</div></div>
+      <div class="card"><div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2623190/a7cee9165bb1bfc092c390c5cff215ce0e381dfc/header.jpg"><div class="own"><span class="dot" style="width:6px;height:6px;background:var(--xbox)"></span>Game Pass</div></div><div class="t">Oblivion Remastered</div><div class="s">Xbox · 12 h</div></div>
+      <div class="card"><div class="cov"><img src="https://cdn1.epicgames.com/spt-assets/d66803a6d719483f8659cbffdf5c8204/fragpunk-16kek.jpg"><div class="own"><span class="dot" style="width:6px;height:6px;background:var(--epic)"></span>Epic</div></div><div class="t">FragPunk</div><div class="s">Epic · 6 h</div></div>
+      <div class="card"><div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1030300/library_600x900.jpg"><div class="own"><span class="dot" style="width:6px;height:6px;background:var(--acc1)"></span>x_05</div></div><div class="t">Hollow Knight: Silksong</div><div class="s">Steam · 63 h</div></div>
+      <div class="card"><div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/230410/library_600x900.jpg"><div class="own"><span class="dot" style="width:6px;height:6px;background:var(--acc1)"></span>x_05</div></div><div class="t">Warframe</div><div class="s">Steam · 320 h</div></div>
+      <div class="card"><div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3564740/library_600x900.jpg"><div class="own"><span class="dot" style="width:6px;height:6px;background:var(--acc1)"></span>x_05</div></div><div class="t">Where Winds Meet</div><div class="s">Steam · 18 h</div></div>
+    </div>
+  </div>
+  <div class="shelf">
+    <h2 class="disp"><span class="dot" style="background:var(--xbox)"></span>Xbox Game Pass <span class="n">7 games</span><span class="all">View all ›</span></h2>
+    <div class="row">
+      <div class="card"><div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1808500/library_600x900.jpg"><div class="prog">READY</div></div><div class="t">ARC Raiders</div><div class="s">Game Pass</div></div>
+      <div class="card"><div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1938090/library_600x900.jpg"></div><div class="t">Call of Duty</div><div class="s">Game Pass</div></div>
+      <div class="card"><div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2623190/a7cee9165bb1bfc092c390c5cff215ce0e381dfc/header.jpg"></div><div class="t">Oblivion Remastered</div><div class="s">Game Pass</div></div>
+      <div class="card"><div class="cov" style="background:linear-gradient(160deg,#3e7d3a,#1a2e18);display:flex;align-items:center;justify-content:center;font:700 30px 'Space Grotesk';color:#9fdd9a">M</div><div class="t">Minecraft for Windows</div><div class="s">Game Pass</div></div>
+      <div class="card"><div class="cov" style="background:linear-gradient(160deg,#4c6b2f,#20301a);display:flex;align-items:center;justify-content:center;font:700 30px 'Space Grotesk';color:#c3e79a">MJ</div><div class="t">Minecraft: Java Edition</div><div class="s">Game Pass</div></div>
+    </div>
+  </div>
+</div>
+</body></html>

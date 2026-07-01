@@ -1,0 +1,110 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#08090d;--glass:rgba(20,23,32,.55);--line:rgba(255,255,255,.09);--txt:#eef1f7;--mut:#9aa2b5;--faint:#5b6478;
+--steam:#66c0f4;--epic:#a78bfa;--gog:#c084fc;--xbox:#4ade80;--acc1:#f59e0b;--acc2:#f472b6;--sel:#7dd3fc}
+*{margin:0;box-sizing:border-box}body{background:var(--bg);color:var(--txt);font-family:Manrope;width:1440px;height:900px;overflow:hidden;position:relative}
+.disp{font-family:'Space Grotesk'}
+/* ambient */
+.blob{position:absolute;border-radius:50%;filter:blur(120px);opacity:.5}
+.b1{width:700px;height:700px;left:-180px;top:-260px;background:#123a5c}
+.b2{width:600px;height:600px;right:-140px;bottom:-260px;background:#3b2a12}
+.b3{width:400px;height:400px;left:44%;top:56%;background:#1b2a4d;opacity:.42}
+.noise{position:absolute;inset:0;background:radial-gradient(1200px 600px at 60% -10%,rgba(125,211,252,.06),transparent)}
+/* floating sidebar */
+.side{position:absolute;left:18px;top:18px;bottom:18px;width:224px;border-radius:22px;background:var(--glass);border:1px solid var(--line);
+backdrop-filter:blur(30px);padding:22px 16px;display:flex;flex-direction:column;box-shadow:0 24px 70px rgba(0,0,0,.5)}
+.logo{font:700 18px 'Space Grotesk';letter-spacing:.16em;padding:0 8px;margin-bottom:26px}
+.logo b{color:var(--sel)}
+.nav{display:flex;flex-direction:column;gap:4px}
+.ni{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:12px;font-size:13.5px;font-weight:700;color:var(--faint)}
+.ni.on{background:rgba(125,211,252,.12);color:var(--txt);box-shadow:inset 0 0 0 1px rgba(125,211,252,.25)}
+.sect{font-size:10px;letter-spacing:.2em;color:var(--faint);font-weight:800;margin:24px 12px 10px}
+.st{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:11px;font-size:12.5px;font-weight:700;color:var(--mut)}
+.st .n{margin-left:auto;color:var(--faint);font-size:11px}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.side .spring{flex:1}
+.me{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.ava{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#1a1205}
+.me .who{font-size:12.5px;font-weight:800}
+.me .sub{font-size:10.5px;color:var(--xbox);font-weight:700}
+/* content */
+.content{position:absolute;left:264px;right:18px;top:18px;bottom:18px;display:flex;flex-direction:column}
+.head{display:flex;align-items:flex-end;gap:20px;padding:18px 10px 20px}
+.head h1{font:700 30px 'Space Grotesk'}
+.head .sub{font-size:13px;color:var(--mut);font-weight:600;padding-bottom:5px}
+.head .spring{flex:1}
+.search{width:300px;height:40px;border-radius:20px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(20px);display:flex;align-items:center;gap:10px;padding:0 16px;color:var(--faint);font-size:13px}
+.iconb{width:40px;height:40px;border-radius:20px;background:var(--glass);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:16px}
+/* segmented filters */
+.segrow{display:flex;gap:8px;padding:0 10px 18px}
+.seg{display:flex;align-items:center;gap:8px;height:36px;padding:0 15px;border-radius:18px;background:rgba(255,255,255,.045);border:1px solid var(--line);font-size:12.5px;font-weight:700;color:var(--mut)}
+.seg.on{background:rgba(125,211,252,.13);border-color:rgba(125,211,252,.4);color:#d9f1ff}
+.seg .n{color:var(--faint);font-size:11px}
+/* grid */
+.grid{flex:1;display:grid;grid-template-columns:repeat(5,1fr);gap:16px;padding:2px 10px;overflow:hidden;align-content:start}
+.card{position:relative;border-radius:18px;overflow:hidden;aspect-ratio:3/4.05;background:linear-gradient(160deg,#1d2432,#0d1017);border:1px solid var(--line);box-shadow:0 14px 34px rgba(0,0,0,.42)}
+.card img{width:100%;height:100%;object-fit:cover;display:block}
+.foot{position:absolute;inset:auto 0 0 0;padding:34px 13px 11px;background:linear-gradient(180deg,transparent,rgba(4,5,8,.94) 70%)}
+.foot .t{font:700 13.5px 'Space Grotesk';margin-bottom:3px}
+.foot .m{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;color:var(--mut)}
+.card.sel{border-color:rgba(125,211,252,.6);box-shadow:0 0 0 1px rgba(125,211,252,.5),0 18px 60px rgba(125,211,252,.22)}
+.card.sel .playover{position:absolute;inset:0;background:rgba(4,6,10,.44);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;backdrop-filter:blur(3px)}
+.pbig{height:44px;padding:0 24px;border-radius:22px;background:#fff;color:#0a0c11;font:800 13.5px Manrope;display:flex;align-items:center;gap:8px}
+.pghost{height:36px;padding:0 16px;border-radius:18px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.1);color:#fff;font:700 12px Manrope;display:flex;align-items:center}
+.badge{position:absolute;top:10px;left:10px;background:rgba(4,6,10,.72);backdrop-filter:blur(8px);border-radius:9px;padding:4px 9px;font-size:9.5px;font-weight:800;display:flex;gap:6px;align-items:center}
+</style></head><body>
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="noise"></div>
+<div class="side">
+  <div class="logo">OR<b>B</b>IT</div>
+  <div class="nav">
+    <div class="ni on">▦ &nbsp;Library</div>
+    <div class="ni">◉ &nbsp;Accounts</div>
+    <div class="ni">⚙ &nbsp;Settings</div>
+  </div>
+  <div class="sect">STORES</div>
+  <div class="st"><span class="dot" style="background:var(--steam)"></span>Steam<span class="n">11</span></div>
+  <div class="st"><span class="dot" style="background:var(--epic)"></span>Epic Games<span class="n">3</span></div>
+  <div class="st"><span class="dot" style="background:var(--gog)"></span>GOG<span class="n">1</span></div>
+  <div class="st"><span class="dot" style="background:var(--xbox)"></span>Xbox<span class="n">7</span></div>
+  <div class="spring"></div>
+  <div class="me"><div class="ava">L</div><div><div class="who">x_05</div><div class="sub">● Steam online</div></div></div>
+</div>
+<div class="content">
+  <div class="head">
+    <div>
+      <h1 class="disp">Good evening, Lexroid</h1>
+      <div class="sub">22 games ready across 4 stores — pick one, ORBIT handles the accounts.</div>
+    </div>
+    <div class="spring"></div>
+    <div class="search">⌕ &nbsp;Search…</div>
+    <div class="iconb">⟳</div>
+    <div class="iconb">⏻</div>
+  </div>
+  <div class="segrow">
+    <div class="seg on">All <span class="n">22</span></div>
+    <div class="seg"><span class="dot" style="background:var(--steam)"></span>Steam <span class="n">11</span></div>
+    <div class="seg"><span class="dot" style="background:var(--epic)"></span>Epic <span class="n">3</span></div>
+    <div class="seg"><span class="dot" style="background:var(--gog)"></span>GOG <span class="n">1</span></div>
+    <div class="seg"><span class="dot" style="background:var(--xbox)"></span>Xbox <span class="n">7</span></div>
+    <div class="seg" style="margin-left:auto"><span class="dot" style="background:var(--acc1)"></span>x_05 <span class="n">10</span></div>
+    <div class="seg"><span class="dot" style="background:var(--acc2)"></span>katscrimson3 <span class="n">1</span></div>
+  </div>
+  <div class="grid">
+    <div class="card sel">
+      <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1172470/library_600x900.jpg">
+      <div class="badge"><span class="dot" style="width:6px;height:6px;background:var(--acc1)"></span>x_05 · ready</div>
+      <div class="playover"><div class="pbig">▶ &nbsp;Play now</div><div class="pghost">Launch offline</div></div>
+    </div>
+    <div class="card"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1903340/library_600x900.jpg"><div class="badge"><span class="dot" style="width:6px;height:6px;background:var(--acc1)"></span>x_05</div><div class="foot"><div class="t">Clair Obscur: Expedition 33</div><div class="m"><span class="dot" style="width:5px;height:5px;background:var(--steam)"></span>Steam · 41 h</div></div></div>
+    <div class="card"><img src="https://cdn1.epicgames.com/item/fn/FNBR_41-00_C7S3_EGS_Launcher_Blade_1200x1600_1200x1600-1cd8e8a10f834e4a98bf3237c32761b5"><div class="badge"><span class="dot" style="width:6px;height:6px;background:var(--epic)"></span>Epic</div><div class="foot"><div class="t">Fortnite</div><div class="m"><span class="dot" style="width:5px;height:5px;background:var(--epic)"></span>Epic Games</div></div></div>
+    <div class="card"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1808500/library_600x900.jpg"><div class="badge"><span class="dot" style="width:6px;height:6px;background:var(--xbox)"></span>Game Pass</div><div class="foot"><div class="t">ARC Raiders</div><div class="m"><span class="dot" style="width:5px;height:5px;background:var(--xbox)"></span>Xbox · yesterday</div></div></div>
+    <div class="card"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3321460/library_600x900.jpg"><div class="badge"><span class="dot" style="width:6px;height:6px;background:var(--acc2)"></span>katscrimson3</div><div class="foot"><div class="t">Crimson Desert</div><div class="m"><span class="dot" style="width:5px;height:5px;background:var(--steam)"></span>Steam · family share</div></div></div>
+    <div class="card"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1030300/library_600x900.jpg"><div class="badge"><span class="dot" style="width:6px;height:6px;background:var(--acc1)"></span>x_05</div><div class="foot"><div class="t">Hollow Knight: Silksong</div><div class="m"><span class="dot" style="width:5px;height:5px;background:var(--steam)"></span>Steam · 63 h</div></div></div>
+    <div class="card"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/230410/library_600x900.jpg"><div class="badge"><span class="dot" style="width:6px;height:6px;background:var(--acc1)"></span>x_05</div><div class="foot"><div class="t">Warframe</div><div class="m"><span class="dot" style="width:5px;height:5px;background:var(--steam)"></span>Steam · 320 h</div></div></div>
+    <div class="card"><img src="https://cdn1.epicgames.com/spt-assets/d66803a6d719483f8659cbffdf5c8204/fragpunk-16kek.jpg"><div class="badge"><span class="dot" style="width:6px;height:6px;background:var(--epic)"></span>Epic</div><div class="foot"><div class="t">FragPunk</div><div class="m"><span class="dot" style="width:5px;height:5px;background:var(--epic)"></span>Epic Games</div></div></div>
+    <div class="card"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2623190/a7cee9165bb1bfc092c390c5cff215ce0e381dfc/header.jpg"><div class="badge"><span class="dot" style="width:6px;height:6px;background:var(--xbox)"></span>Game Pass</div><div class="foot"><div class="t">Oblivion Remastered</div><div class="m"><span class="dot" style="width:5px;height:5px;background:var(--xbox)"></span>Xbox · 12 h</div></div></div>
+    <div class="card"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3564740/library_600x900.jpg"><div class="badge"><span class="dot" style="width:6px;height:6px;background:var(--acc1)"></span>x_05</div><div class="foot"><div class="t">Where Winds Meet</div><div class="m"><span class="dot" style="width:5px;height:5px;background:var(--steam)"></span>Steam · 18 h</div></div></div>
+  </div>
+</div>
+</body></html>

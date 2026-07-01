@@ -1,0 +1,18 @@
+:root{--bg:#0a0c11;--panel:rgba(255,255,255,.045);--line:rgba(255,255,255,.09);--txt:#eef1f7;--mut:#98a0b3;--faint:#5c657a;
+--steam:#66c0f4;--epic:#a78bfa;--gog:#c084fc;--xbox:#4ade80;--acc1:#f59e0b;--acc2:#f472b6}
+*{margin:0;box-sizing:border-box}body{background:var(--bg);color:var(--txt);font-family:Manrope;width:1440px;height:900px;overflow:hidden}
+.disp{font-family:'Space Grotesk'}
+.top{position:fixed;inset:0 0 auto 0;height:64px;display:flex;align-items:center;gap:18px;padding:0 28px;z-index:9;
+background:linear-gradient(180deg,rgba(10,12,17,.94),rgba(10,12,17,.55) 70%,rgba(10,12,17,0))}
+.logo{font:700 19px 'Space Grotesk';letter-spacing:.14em}
+.logo b{color:var(--acc1)}
+.tabs{display:flex;gap:4px;margin-left:22px}
+.tab{padding:9px 16px;border-radius:19px;font-size:13px;font-weight:700;color:var(--faint)}
+.tab.on{background:rgba(255,255,255,.08);color:var(--txt)}
+.search{flex:0 1 340px;margin-left:10px;height:38px;border-radius:19px;background:rgba(255,255,255,.06);border:1px solid var(--line);
+display:flex;align-items:center;gap:10px;padding:0 16px;color:var(--faint);font-size:13px}
+.spacer{flex:1}
+.pill{height:34px;border-radius:17px;border:1px solid var(--line);background:rgba(255,255,255,.05);display:flex;align-items:center;gap:8px;padding:0 14px;font-size:12.5px;color:var(--mut);font-weight:600}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#1a1205}
+.kbd{border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:10px}

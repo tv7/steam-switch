@@ -1,0 +1,63 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="m1base.css">
+<style>
+.hero{position:relative;height:430px;filter:blur(7px) brightness(.55)}
+.hero img{width:100%;height:100%;object-fit:cover;object-position:center 30%}
+.shelves{padding:6px 44px;filter:blur(7px) brightness(.55)}
+.row{display:flex;gap:14px}
+.cov{width:132px;height:176px;border-radius:12px;overflow:hidden;background:#1a2030;flex:none}
+.cov img{width:100%;height:100%;object-fit:cover}
+.dim{position:fixed;inset:0;background:rgba(5,6,10,.55);z-index:20}
+/* palette */
+.pal{position:fixed;left:50%;top:120px;transform:translateX(-50%);width:640px;z-index:30;border-radius:20px;overflow:hidden;
+background:rgba(16,19,27,.92);backdrop-filter:blur(30px);border:1px solid rgba(255,255,255,.14);box-shadow:0 40px 120px rgba(0,0,0,.7)}
+.pin{display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid var(--line);font-size:16px}
+.pin .q{color:var(--txt);font-weight:700}.pin .cur{display:inline-block;width:2px;height:20px;background:var(--acc1);vertical-align:middle;margin-left:1px}
+.pin .ph{color:var(--faint)}
+.res{padding:8px}
+.r{display:flex;align-items:center;gap:14px;padding:10px 14px;border-radius:13px}
+.r.on{background:rgba(255,255,255,.08)}
+.r img{width:38px;height:52px;border-radius:7px;object-fit:cover}
+.r .nm{font-weight:800;font-size:14px}
+.r .meta{font-size:11px;color:var(--faint);font-weight:600;margin-top:2px;display:flex;align-items:center;gap:6px}
+.r .go{margin-left:auto;font-size:11px;color:var(--faint);font-weight:700;display:flex;gap:8px;align-items:center}
+.r.on .go .enter{background:rgba(255,255,255,.12);border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:10px;color:var(--mut)}
+.pfoot{display:flex;gap:18px;padding:12px 22px;border-top:1px solid var(--line);font-size:10.5px;color:var(--faint);font-weight:700}
+.pfoot b{color:var(--mut)}
+</style></head><body>
+<div class="hero"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1808500/library_hero.jpg"></div>
+<div class="shelves">
+  <div class="row">
+    <div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1172470/library_600x900.jpg"></div>
+    <div class="cov"><img src="https://cdn1.epicgames.com/item/fn/FNBR_41-00_C7S3_EGS_Launcher_Blade_1200x1600_1200x1600-1cd8e8a10f834e4a98bf3237c32761b5"></div>
+    <div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1903340/library_600x900.jpg"></div>
+    <div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3321460/library_600x900.jpg"></div>
+    <div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1030300/library_600x900.jpg"></div>
+    <div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/230410/library_600x900.jpg"></div>
+    <div class="cov"><img src="https://cdn1.epicgames.com/spt-assets/d66803a6d719483f8659cbffdf5c8204/fragpunk-16kek.jpg"></div>
+    <div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3564740/library_600x900.jpg"></div>
+    <div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1938090/library_600x900.jpg"></div>
+  </div>
+</div>
+<div class="dim"></div>
+<div class="pal">
+  <div class="pin">⌕ &nbsp;<span class="q">war</span><span class="cur"></span>&nbsp;<span class="ph">— jump to a game</span></div>
+  <div class="res">
+    <div class="r on">
+      <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/230410/library_600x900.jpg">
+      <div><div class="nm">Warframe</div><div class="meta"><span class="dot" style="width:5px;height:5px;background:var(--steam)"></span>Steam · <span style="color:var(--acc1)">x_05</span> · ready · 320 h</div></div>
+      <div class="go"><span class="enter">↵ Play</span></div>
+    </div>
+    <div class="r">
+      <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1938090/library_600x900.jpg">
+      <div><div class="nm">Call of Duty®</div><div class="meta"><span class="dot" style="width:5px;height:5px;background:var(--xbox)"></span>Xbox · Game Pass</div></div>
+    </div>
+    <div class="r">
+      <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3564740/library_600x900.jpg">
+      <div><div class="nm">Where Winds Meet</div><div class="meta"><span class="dot" style="width:5px;height:5px;background:var(--steam)"></span>Steam · <span style="color:var(--acc1)">x_05</span> · ready · 18 h</div></div>
+    </div>
+  </div>
+  <div class="pfoot"><span><b>↑↓</b> navigate</span><span><b>↵</b> play</span><span><b>Shift ↵</b> play offline</span><span><b>Tab</b> details</span><span style="margin-left:auto"><b>Esc</b> close</span></div>
+</div>
+</body></html>

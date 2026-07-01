@@ -1,0 +1,77 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="m1base.css">
+<style>
+.hero{position:relative;height:560px}
+.hero img{width:100%;height:100%;object-fit:cover;object-position:center 22%}
+.hero .fade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,12,17,.3) 0%,rgba(10,12,17,.05) 30%,rgba(10,12,17,.94) 86%,var(--bg) 100%),linear-gradient(90deg,rgba(10,12,17,.88),rgba(10,12,17,0) 58%)}
+.info{position:absolute;left:44px;bottom:36px;max-width:700px}
+.back{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--mut);margin-bottom:16px;background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:16px;padding:7px 14px}
+.kick{font-size:11px;letter-spacing:.22em;font-weight:800;color:var(--steam);margin-bottom:10px;display:flex;align-items:center;gap:9px}
+h1{font:700 46px/1.04 'Space Grotesk';margin-bottom:14px}
+.meta{display:flex;gap:8px;margin-bottom:14px}
+.chip{font-size:11.5px;font-weight:700;padding:5px 11px;border-radius:99px;border:1px solid var(--line);background:rgba(255,255,255,.07);color:var(--mut)}
+.chip.bl{color:#062032;background:var(--steam);border-color:transparent}
+.chip.am{color:#ffd48a;border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.1)}
+.flow{max-width:560px;border-radius:13px;background:rgba(102,192,244,.08);border:1px solid rgba(102,192,244,.22);padding:12px 15px;font-size:12.5px;color:#b8dcf2;line-height:1.55;margin-bottom:18px}
+.btns{display:flex;gap:12px;align-items:center}
+.play{height:48px;padding:0 28px;border-radius:24px;background:#fff;color:#0b0d12;font:800 15px Manrope;display:flex;align-items:center;gap:10px}
+.ghost{height:48px;padding:0 20px;border-radius:24px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.06);color:var(--txt);font:700 13.5px Manrope;display:flex;align-items:center}
+.stats{position:absolute;right:44px;bottom:36px;width:280px;border-radius:16px;background:rgba(12,14,20,.72);backdrop-filter:blur(16px);border:1px solid var(--line);overflow:hidden}
+.srow{display:flex;justify-content:space-between;padding:11px 16px;font-size:12px;border-bottom:1px solid var(--line)}
+.srow:last-child{border-bottom:none}
+.srow .k{color:var(--faint);font-weight:800;letter-spacing:.08em;font-size:10px}
+.srow .v{font-weight:700}
+.shelves{padding:22px 44px}
+.shelf h2{font:600 15px 'Space Grotesk';display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.shelf h2 .n{color:var(--faint);font:600 12px Manrope}
+.row{display:flex;gap:14px}
+.card{width:126px}
+.cov{width:126px;height:168px;border-radius:12px;overflow:hidden;position:relative;background:linear-gradient(160deg,#232a3a,#11141d);border:1px solid var(--line)}
+.cov img{width:100%;height:100%;object-fit:cover}
+.card .t{margin-top:7px;font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .s{font-size:10px;color:var(--faint);font-weight:600}
+</style></head><body>
+<div class="hero">
+  <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1903340/library_hero.jpg">
+  <div class="fade"></div>
+  <div class="info">
+    <div class="back">‹ &nbsp;Back to library</div>
+    <div class="kick"><span class="dot" style="background:var(--steam)"></span>STEAM &nbsp;·&nbsp; <span class="dot" style="background:var(--acc1)"></span> X_05</div>
+    <h1 class="disp">Clair Obscur: Expedition 33</h1>
+    <div class="meta"><span class="chip bl">Installed</span><span class="chip am">✓ Account ready — no sign-in needed</span><span class="chip">41 h played</span><span class="chip">Last played 2 days ago</span></div>
+    <div class="flow">Play switches Steam to <b>x_05</b>, waits for sign-in, then launches the game — no manual account swapping. Steam will close and restart.</div>
+    <div class="btns">
+      <div class="play">▶&nbsp; Play now</div>
+      <div class="ghost">⏻ &nbsp;Launch offline</div>
+      <div class="ghost" style="border-style:dashed">Pin to account…</div>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="srow"><span class="k">STORE</span><span class="v" style="color:var(--steam)">Steam</span></div>
+    <div class="srow"><span class="k">ACCOUNT</span><span class="v" style="color:#ffd48a">x_05 · ready</span></div>
+    <div class="srow"><span class="k">STATUS</span><span class="v">Fully installed</span></div>
+    <div class="srow"><span class="k">APP ID</span><span class="v">1903340</span></div>
+  </div>
+</div>
+<div class="top">
+  <div class="logo disp">OR<b>B</b>IT</div>
+  <div class="tabs"><div class="tab on">Library</div><div class="tab">Accounts</div><div class="tab">Settings</div></div>
+  <div class="search">⌕ &nbsp;Search 22 games… <span class="kbd" style="margin-left:auto">Ctrl K</span></div>
+  <div class="spacer"></div>
+  <div class="pill"><span class="dot" style="background:var(--xbox)"></span>Steam online · x_05</div>
+  <div class="avatar">L</div>
+</div>
+<div class="shelves">
+  <div class="shelf">
+    <h2 class="disp">More on <span style="color:var(--acc1)">x_05</span> <span class="n">9 games</span></h2>
+    <div class="row">
+      <div class="card"><div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1172470/library_600x900.jpg"></div><div class="t">Apex Legends</div><div class="s">214 h</div></div>
+      <div class="card"><div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1030300/library_600x900.jpg"></div><div class="t">Hollow Knight: Silksong</div><div class="s">63 h</div></div>
+      <div class="card"><div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/230410/library_600x900.jpg"></div><div class="t">Warframe</div><div class="s">320 h</div></div>
+      <div class="card"><div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3564740/library_600x900.jpg"></div><div class="t">Where Winds Meet</div><div class="s">18 h</div></div>
+      <div class="card"><div class="cov"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2215200/library_600x900.jpg"></div><div class="t">LEGO® Batman</div><div class="s">4 h</div></div>
+    </div>
+  </div>
+</div>
+</body></html>
