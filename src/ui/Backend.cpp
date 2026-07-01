@@ -32,15 +32,19 @@ const QString kUnmappedColor = "#c94f4f";
 // colliding with real Steam appids (which are small positives).
 constexpr qint64 kNonSteamIdBase = 0x4000000000000000LL;
 
-// A game's owning-store chip color (for stores without per-account switching).
-QString storeColor(Store s) {
+// Per-store brand identity for the multi-store UI (chip/badge color, short label,
+// and readable foreground). Mirrors the ORBIT design's store palette.
+struct StoreBrand { const char* key; const char* name; const char* shortName; QString color; QString fg; };
+StoreBrand storeBrand(Store s) {
     switch (s) {
-        case Store::Epic: return "#7c5cff";   // Epic — violet
-        case Store::Gog:  return "#a457ff";
-        case Store::Xbox: return "#57cc99";
-        default:          return "#9aa0a6";
+        case Store::Steam: return {"steam", "Steam",     "STEAM",     "#2a7fd4", "#ffffff"};
+        case Store::Epic:  return {"epic",  "Epic Games","EPIC",      "#d9d9e0", "#0a0a0c"};
+        case Store::Gog:   return {"gog",   "GOG",       "GOG",       "#9b4dde", "#ffffff"};
+        case Store::Xbox:  return {"xbox",  "Game Pass", "GAME PASS", "#3fae4f", "#ffffff"};
     }
+    return {"?", "Unknown", "?", "#9aa0a6", "#ffffff"};
 }
+QString storeColor(Store s) { return storeBrand(s).color; }
 
 }  // namespace
 
@@ -56,6 +60,7 @@ Backend::Backend(QObject* parent) : QObject(parent) {
 
 void Backend::setSearch(const QString& text) { proxy_.setSearchText(text); }
 void Backend::setAccountFilter(const QString& filter) { proxy_.setAccountFilter(filter); }
+void Backend::setStoreFilter(const QString& store) { proxy_.setStoreFilter(store); }
 void Backend::setSortOrder(const QString& order) { proxy_.setSortAscending(order != "za"); }
 
 void Backend::setLanguage(const QString& lang) {
@@ -116,9 +121,11 @@ void Backend::buildState() {
 
     std::vector<GameRow> rows;
     std::map<std::string, int> gameCounts;   // steamid64 -> #games (port of counts)
+    std::map<Store, int> storeCounts;        // store -> #games (sidebar STORES panel)
     std::map<qint64, GameRef> index;         // routing id -> game, for play/cover
     for (auto& s : stores_) {
         for (const auto& g : s->scan()) {
+            storeCounts[g.store]++;
             GameRow r;
             r.store = g.store;
             r.launchId = QString::fromStdString(g.launchId);
@@ -169,9 +176,28 @@ void Backend::buildState() {
 
     { std::lock_guard<std::mutex> lk(indexMutex_); gameIndex_ = std::move(index); }
 
+    // Per-store cards for the sidebar STORES panel / Accounts view / Manage panel.
+    QVariantList storeCards;
+    for (Store s : {Store::Steam, Store::Epic, Store::Gog, Store::Xbox}) {
+        StoreBrand b = storeBrand(s);
+        int n = storeCounts.count(s) ? storeCounts[s] : 0;
+        QVariantMap card;
+        card["key"] = b.key;
+        card["name"] = b.name;                    // brand label ("Epic Games")
+        card["storeName"] = storeName(s);          // core token for filtering ("Epic")
+        card["shortName"] = b.shortName;
+        card["color"] = b.color;
+        card["textColor"] = b.fg;
+        card["count"] = n;
+        card["connected"] = n > 0;   // a store is "connected" if it has installed games
+        card["isSteam"] = (s == Store::Steam);
+        storeCards.push_back(card);
+    }
+
     // Publish on the GUI thread.
-    QMetaObject::invokeMethod(this, [this, rows = std::move(rows), accountCards, current]() mutable {
+    QMetaObject::invokeMethod(this, [this, rows = std::move(rows), accountCards, storeCards, current]() mutable {
         accounts_ = accountCards;
+        stores_ = storeCards;
         currentAccount_ = current;
         model_.setRows(std::move(rows));
         scanning_ = false;

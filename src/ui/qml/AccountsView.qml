@@ -1,72 +1,75 @@
-// Accounts hub: a card per account (avatar, name, login, readiness badge) + an
-// "Add New Account" dashed card. Ported from .acct-grid / .acct-card / .acct-add.
-
+// Accounts screen: a card per store showing its brand mark, name, sync status and
+// game count, with a Manage button that opens the side panel. Mirrors the design's
+// "connect your stores" grid — here "connected" means the store has installed games.
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 import SteamSwitch
 
-Item {
+Flickable {
     id: root
+    contentHeight: col.implicitHeight + 78
+    clip: true
+    ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
-    Column {
-        anchors.fill: parent
-        anchors.leftMargin: 24; anchors.rightMargin: 24; anchors.bottomMargin: 8
-        spacing: 12
+    ColumnLayout {
+        id: col
+        x: 32; width: Math.min(parent.width - 64, 820)
+        y: 28
+        spacing: 0
 
-        Label { text: qsTr("ACCOUNTS"); color: Theme.muted
-            font.family: Theme.fontMono; font.pixelSize: 12; font.letterSpacing: 1; font.bold: true }
+        Label { text: qsTr("Accounts"); color: Theme.text
+            font.family: Theme.fontDisplay; font.pixelSize: 27; font.weight: Font.Bold }
+        Label {
+            Layout.topMargin: 6; Layout.bottomMargin: 26; Layout.fillWidth: true
+            text: qsTr("Your stores are detected from what's installed on this PC. Steam also supports switching between multiple accounts.")
+            color: Theme.faint; font.family: Theme.fontBody; font.pixelSize: 13; wrapMode: Text.WordWrap
+        }
 
-        GridView {
-            width: parent.width
-            height: parent.height - 36
-            cellWidth: 320; cellHeight: 124
-            clip: true
-            model: backend.accounts
+        GridLayout {
+            Layout.fillWidth: true
+            columns: 2; rowSpacing: 12; columnSpacing: 12
 
-            delegate: Rectangle {
-                width: 304; height: 108; radius: Theme.rLg
-                color: Theme.surface
-                border.color: modelData.loggedIn ? Theme.primarySoft : Theme.outline
-                border.width: modelData.loggedIn ? 2 : 1
-
-                Row {
-                    anchors.fill: parent; anchors.margins: 16; spacing: 12
-                    Rectangle {
-                        width: 46; height: 46; radius: Theme.rMd; color: modelData.color
-                        Label { anchors.centerIn: parent; text: modelData.personaName.charAt(0).toUpperCase()
-                            color: "#0b1326"; font.bold: true; font.pixelSize: 18 }
-                    }
-                    Column {
-                        width: parent.width - 58; spacing: 3
-                        Label { text: modelData.personaName; color: "#fff"; font.bold: true; font.pixelSize: 15
-                            elide: Text.ElideRight; width: parent.width }
-                        Label { text: modelData.accountName; color: Theme.faint; font.pixelSize: 12
-                            elide: Text.ElideRight; width: parent.width }
-                        Label {
-                            text: modelData.loggedIn ? qsTr("● LOGGED IN")
-                                  : (modelData.ready ? qsTr("✓ ready") : qsTr("⚠ needs login"))
-                            color: modelData.loggedIn ? Theme.good
-                                   : (modelData.ready ? Theme.muted : Theme.warn)
-                            font.pixelSize: 12; font.bold: true
+            Repeater {
+                model: backend.stores
+                delegate: Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 74; radius: 13
+                    color: Theme.glassSoft
+                    border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.07)
+                    RowLayout {
+                        anchors.fill: parent; anchors.margins: 17; spacing: 13
+                        Rectangle { Layout.preferredWidth: 40; Layout.preferredHeight: 40
+                            radius: 10; color: modelData.color
+                            Label { anchors.centerIn: parent; text: modelData.shortName.charAt(0)
+                                color: modelData.textColor; font.family: Theme.fontDisplay
+                                font.pixelSize: 18; font.weight: Font.Bold } }
+                        ColumnLayout {
+                            Layout.fillWidth: true; spacing: 2
+                            Label { text: modelData.name; color: Theme.text
+                                font.family: Theme.fontBody; font.pixelSize: 14; font.weight: Font.Bold }
+                            Label {
+                                text: modelData.connected
+                                    ? "● " + modelData.count + qsTr(" games synced")
+                                    : qsTr("○ Not connected")
+                                color: modelData.connected ? Theme.good : Theme.faint
+                                font.family: Theme.fontBody; font.pixelSize: 12; font.weight: Font.Medium
+                            }
+                        }
+                        Rectangle {
+                            implicitWidth: manageLabel.implicitWidth + 28; implicitHeight: 32
+                            radius: 8
+                            color: manageHover.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
+                            border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.12)
+                            Label { id: manageLabel; anchors.centerIn: parent; text: qsTr("Manage")
+                                color: Theme.muted; font.family: Theme.fontBody
+                                font.pixelSize: 12; font.weight: Font.DemiBold }
+                            MouseArea { id: manageHover; anchors.fill: parent; hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: AppState.manageKey = modelData.key }
                         }
                     }
                 }
-            }
-
-            footer: Rectangle {
-                width: 304; height: 108; radius: Theme.rLg
-                color: addHover.containsMouse ? Theme.surface : "transparent"
-                border.color: addHover.containsMouse ? Theme.primary : Theme.outline
-                border.width: 1
-                Column {
-                    anchors.centerIn: parent; spacing: 4
-                    Label { text: "＋"; color: Theme.primarySoft; font.pixelSize: 26
-                        anchors.horizontalCenter: parent.horizontalCenter }
-                    Label { text: qsTr("Add New Account"); color: Theme.text; font.bold: true; font.pixelSize: 15
-                        anchors.horizontalCenter: parent.horizontalCenter }
-                }
-                MouseArea { id: addHover; anchors.fill: parent; hoverEnabled: true
-                    onClicked: backend.addAccount() }
             }
         }
     }

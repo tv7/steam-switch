@@ -17,6 +17,7 @@ public:
 
     void setSearchText(const QString& text);
     void setAccountFilter(const QString& filter);   // "all" | steamid64 | "unmapped"
+    void setStoreFilter(const QString& store);      // "all" | store name ("Steam"/…)
     void setSortAscending(bool asc);
 
 protected:
@@ -26,6 +27,7 @@ protected:
 private:
     QString search_;
     QString accountFilter_ = "all";
+    QString storeFilter_ = "all";
 };
 
 }  // namespace ss::ui

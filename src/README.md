@@ -97,9 +97,22 @@ is already byte-identical.)
   — the exe can't be run directly). The publisher-hash pipeline is unit-tested
   against Microsoft's well-known `8wekyb3d8bbwe`. Verify with `ssdiag xbox` and
   cross-check AUMIDs against PowerShell `get-StartApps`.
-- **Written, builds on Windows w/ Qt (not yet run here — no Qt/display in sandbox):**
-  the Qt/QML UI (grid, covers, search/filter, accounts hub, launch/cancel, offline,
-  RTL scaffolding), settings/language persistence, store-routed launching.
-- **All four stores done.** **Next:** `windeployqt` portable-zip packaging, then
-  retire the Python/Tauri stack. (Per-store cover art + a multi-store-first UI are
-  the redesign.)
+- **Multi-store UI redesign — "ORBIT" (imported from the Claude Design project):**
+  the Qt/QML shell was rebuilt around a store-agnostic, dynamic-accent glass design.
+  Frameless window with a custom title bar; a glass sidebar (Library / Accounts /
+  Settings + a live STORES panel); a **Library** screen (search, refresh, offline
+  toggle, store + account filter chips, cover grid); a **Detail** screen (big cover,
+  Play now/offline, owning account + truthful stat cards — no fabricated
+  ratings/descriptions); an **Accounts** screen of per-store cards; **Settings**
+  (offline-default + language/RTL); and a slide-in **Manage** panel (per-store sync
+  status + Steam multi-account list + add-account). Each game gets a stable derived
+  accent (from its id) driving the ambient backdrop + placeholder gradient; real
+  cover art layers on top. Typography is **Space Grotesk (display) + Manrope (body)**,
+  instanced to static TTFs and bundled (Cairo covers Arabic). Backend gained a
+  `stores` model + a store filter on the proxy. All QML passes `qmllint` (Qt 6.11)
+  clean; not yet run on a display here (no Qt/GUI in the sandbox) — verify the
+  frameless window (translucency + `startSystemMove`/`startSystemResize`) and the
+  `Canvas`-drawn icons on the real Windows build.
+- **All four stores done + the multi-store UI is in.** **Next:** `windeployqt`
+  portable-zip packaging, then retire the Python/Tauri stack. (Per-store cover art
+  is still a follow-up — non-Steam games show the derived gradient placeholder.)

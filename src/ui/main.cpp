@@ -31,9 +31,13 @@ int main(int argc, char* argv[]) {
     app.setApplicationName("SteamSwitch");
     qInstallMessageHandler(logToFile);
 
-    // Load the bundled UI fonts and make Hanken Grotesk the default, so the look
-    // matches the web build instead of falling back to Segoe UI.
+    // Load the bundled UI fonts and make Manrope the default (ORBIT body font), so
+    // the look matches the design instead of falling back to a system font.
     for (const QString& f : {
+             ":/fonts/space-grotesk-500.ttf", ":/fonts/space-grotesk-600.ttf",
+             ":/fonts/space-grotesk-700.ttf",
+             ":/fonts/manrope-400.ttf", ":/fonts/manrope-500.ttf",
+             ":/fonts/manrope-600.ttf", ":/fonts/manrope-700.ttf", ":/fonts/manrope-800.ttf",
              ":/fonts/hanken-grotesk-400.ttf", ":/fonts/hanken-grotesk-500.ttf",
              ":/fonts/hanken-grotesk-600.ttf", ":/fonts/hanken-grotesk-700.ttf",
              ":/fonts/geist-500.ttf", ":/fonts/geist-600.ttf",
@@ -41,7 +45,7 @@ int main(int argc, char* argv[]) {
              ":/fonts/cairo-arabic-700.ttf"})
         QFontDatabase::addApplicationFont(f);
     {
-        QFont base("Hanken Grotesk");
+        QFont base("Manrope");
         base.setPixelSize(14);
         app.setFont(base);
     }

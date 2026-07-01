@@ -28,6 +28,7 @@ class Backend : public QObject {
     Q_OBJECT
     Q_PROPERTY(QAbstractItemModel* games READ games CONSTANT)
     Q_PROPERTY(QVariantList accounts READ accounts NOTIFY stateChanged)
+    Q_PROPERTY(QVariantList stores READ stores NOTIFY stateChanged)
     Q_PROPERTY(QString currentAccount READ currentAccount NOTIFY stateChanged)
     Q_PROPERTY(int gameCount READ gameCount NOTIFY stateChanged)
     Q_PROPERTY(bool scanning READ scanning NOTIFY scanningChanged)
@@ -40,6 +41,7 @@ public:
 
     QAbstractItemModel* games() { return &proxy_; }
     QVariantList accounts() const { return accounts_; }
+    QVariantList stores() const { return stores_; }
     QString currentAccount() const { return currentAccount_; }
     int gameCount() const { return model_.rowCount(); }
     bool scanning() const { return scanning_; }
@@ -57,6 +59,7 @@ public:
     // Search / filter / sort drive the proxy model (web/app.js visibleGames()).
     Q_INVOKABLE void setSearch(const QString& text);
     Q_INVOKABLE void setAccountFilter(const QString& filter);
+    Q_INVOKABLE void setStoreFilter(const QString& store);
     Q_INVOKABLE void setSortOrder(const QString& order);   // "az" | "za"
     Q_INVOKABLE void setLanguage(const QString& lang);     // ~ set_language (persists)
 
@@ -78,6 +81,7 @@ private:
     GameModel model_;
     GameFilterModel proxy_;
     QVariantList accounts_;
+    QVariantList stores_;
     QString currentAccount_;
     bool scanning_ = false;
     bool launching_ = false;

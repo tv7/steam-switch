@@ -62,28 +62,42 @@ if(Qt6_FOUND)
         ui/GameFilterModel.cpp
         ui/QtFetcher.cpp
     )
-    # Theme.qml is a QML singleton.
+    # Theme.qml and AppState.qml are QML singletons.
     set_source_files_properties(ui/qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+    set_source_files_properties(ui/qml/AppState.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
     qt_add_qml_module(SteamSwitch
         URI SteamSwitch
         VERSION 1.0
         QML_FILES
             ui/qml/Main.qml
             ui/qml/Theme.qml
+            ui/qml/AppState.qml
+            ui/qml/AmbientBackground.qml
             ui/qml/SideNavItem.qml
-            ui/qml/GhostButton.qml
-            ui/qml/GameGrid.qml
+            ui/qml/StoreChip.qml
+            ui/qml/Toggle.qml
             ui/qml/GameCard.qml
+            ui/qml/LibraryView.qml
+            ui/qml/DetailView.qml
             ui/qml/AccountsView.qml
             ui/qml/SettingsView.qml
-            ui/qml/FilterBar.qml
+            ui/qml/ManagePanel.qml
     )
-    # Bundle the UI fonts (Hanken Grotesk / Geist / Cairo) into the binary so the
-    # typography ships without any system install — same as the web build did.
+    # Bundle the UI fonts into the binary so the typography ships without any system
+    # install. ORBIT uses Space Grotesk (display) + Manrope (body); Cairo covers
+    # Arabic. (Hanken Grotesk / Geist kept as fallbacks from the earlier build.)
     qt_add_resources(SteamSwitch "appfonts"
         PREFIX "/fonts"
         BASE "ui/fonts"
         FILES
+            ui/fonts/space-grotesk-500.ttf
+            ui/fonts/space-grotesk-600.ttf
+            ui/fonts/space-grotesk-700.ttf
+            ui/fonts/manrope-400.ttf
+            ui/fonts/manrope-500.ttf
+            ui/fonts/manrope-600.ttf
+            ui/fonts/manrope-700.ttf
+            ui/fonts/manrope-800.ttf
             ui/fonts/hanken-grotesk-400.ttf
             ui/fonts/hanken-grotesk-500.ttf
             ui/fonts/hanken-grotesk-600.ttf
