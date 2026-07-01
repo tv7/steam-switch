@@ -19,6 +19,7 @@ set(CORE_SOURCES
     core/steam_switcher.cpp
     core/steam_launcher.cpp
     core/covers.cpp
+    core/store_covers.cpp
     core/epic_games.cpp
     core/gog_games.cpp
     core/xbox_games.cpp

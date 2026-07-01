@@ -97,7 +97,7 @@ Item {
                         Label { text: qsTr("Launch offline"); color: Theme.text
                             font.family: Theme.fontBody; font.pixelSize: 13; font.weight: Font.DemiBold }
                         Label { text: qsTr("Steam only"); color: Theme.faint
-                            font.family: Theme.fontBody; font.pixelSize: 10.5; font.weight: Font.Medium }
+                            font.family: Theme.fontBody; font.pixelSize: 11; font.weight: Font.Medium }
                     }
                     Toggle { on: AppState.offline; onToggled: AppState.offline = !AppState.offline }
                 }
@@ -115,7 +115,7 @@ Item {
                 font.family: Theme.fontDisplay; font.pixelSize: 20; font.weight: Font.Bold }
             Item { Layout.fillWidth: true }
             Label { text: gv.count + qsTr(" of ") + backend.gameCount + qsTr(" games")
-                color: Theme.faint; font.family: Theme.fontBody; font.pixelSize: 12.5; font.weight: Font.Medium }
+                color: Theme.faint; font.family: Theme.fontBody; font.pixelSize: 13; font.weight: Font.Medium }
         }
 
         // ---- store filter chips ----

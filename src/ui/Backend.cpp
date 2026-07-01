@@ -1,12 +1,14 @@
 #include "Backend.h"
 
 #include "../core/covers.h"
+#include "../core/store_covers.h"
 #include "../core/settings.h"
 #include "../core/steam_accounts.h"
 #include "../core/steam_launcher.h"   // ss::steam::play (online + offline flag method)
 #include "../core/steam_switcher.h"
 
 #include <QBuffer>
+#include <QDebug>
 #include <QMetaObject>
 #include <QStringList>
 #include <QThread>
@@ -30,7 +32,10 @@ const QString kUnmappedColor = "#c94f4f";
 // Non-Steam stores have no numeric appid; Backend hands their games a stable
 // synthetic id in this high range so the appid-keyed UI can address them without
 // colliding with real Steam appids (which are small positives).
-constexpr qint64 kNonSteamIdBase = 0x4000000000000000LL;
+// MUST stay below 2^53: the id round-trips through QML, whose numbers are doubles
+// — a 2^62-range id gets rounded to the nearest representable double and no longer
+// matches the gameIndex_ key (this broke non-Steam covers/launch on real HW).
+constexpr qint64 kNonSteamIdBase = 1LL << 40;   // ~1.1e12, far above any Steam appid
 
 // Per-store brand identity for the multi-store UI (chip/badge color, short label,
 // and readable foreground). Mirrors the ORBIT design's store palette.
@@ -50,10 +55,10 @@ QString storeColor(Store s) { return storeBrand(s).color; }
 
 Backend::Backend(QObject* parent) : QObject(parent) {
     proxy_.setSourceModel(&model_);
-    stores_.push_back(makeSteamStore());
-    stores_.push_back(makeEpicStore());
-    stores_.push_back(makeGogStore());
-    stores_.push_back(makeXboxStore());
+    storeImpls_.push_back(makeSteamStore());
+    storeImpls_.push_back(makeEpicStore());
+    storeImpls_.push_back(makeGogStore());
+    storeImpls_.push_back(makeXboxStore());
     pool_.setMaxThreadCount(6);
     language_ = QString::fromStdString(settings::language());
     onboarded_ = settings::onboarded();
@@ -98,7 +103,7 @@ void Backend::refresh() {
 void Backend::buildState() {
     // Accounts + a stable color per account by position.
     std::vector<Account> accts;
-    for (auto& s : stores_) {
+    for (auto& s : storeImpls_) {
         auto a = s->accounts();
         accts.insert(accts.end(), a.begin(), a.end());
     }
@@ -131,7 +136,7 @@ void Backend::buildState() {
     std::map<std::string, int> gameCounts;   // steamid64 -> #games (port of counts)
     std::map<Store, int> storeCounts;        // store -> #games (sidebar STORES panel)
     std::map<qint64, GameRef> index;         // routing id -> game, for play/cover
-    for (auto& s : stores_) {
+    for (auto& s : storeImpls_) {
         for (const auto& g : s->scan()) {
             storeCounts[g.store]++;
             GameRow r;
@@ -146,11 +151,13 @@ void Backend::buildState() {
                 r.appid = g.appid;
             } else {
                 std::size_t h = std::hash<std::string>{}(g.launchId);
-                qint64 id = kNonSteamIdBase | static_cast<qint64>(h & 0x3FFFFFFFFFFFFFFFULL);
+                // 32 hash bits keeps the max id ≈ 2^40+2^32, comfortably double-exact.
+                qint64 id = kNonSteamIdBase | static_cast<qint64>(h & 0xFFFFFFFFULL);
                 while (index.count(id)) ++id;
                 r.appid = id;
             }
-            index[r.appid] = GameRef{g.store, g.appid, r.launchId, r.name};
+            index[r.appid] = GameRef{g.store, g.appid, r.launchId, r.name,
+                                     QString::fromStdString(g.coverHint)};
 
             std::optional<std::string> sid;
             if (g.store == Store::Steam) sid = steam::accountForGame(g.appid, &accts);
@@ -215,24 +222,35 @@ void Backend::buildState() {
 }
 
 void Backend::requestCover(qint64 appid) {
-    // covers::coverBytes resolves Steam CDN/librarycache art by appid; a non-Steam
-    // synthetic id has no such art, so don't waste a network round-trip on it.
-    // (Per-store cover resolvers land with the multi-store UI.)
+    // Steam ids resolve through covers::coverBytes (librarycache/CDN/appdetails);
+    // non-Steam synthetic ids through store_covers::coverBytes (Xbox local logo,
+    // Epic catalog cache, GOG products API).
+    Store store = Store::Steam;
+    QString launchId, coverHint;
     {
         std::lock_guard<std::mutex> lk(indexMutex_);
         auto it = gameIndex_.find(appid);
-        if (it != gameIndex_.end() && it->second.store != Store::Steam) {
-            QMetaObject::invokeMethod(this, [this, appid] { emit coverReady(appid, QString()); },
-                                      Qt::QueuedConnection);
-            return;
+        if (it != gameIndex_.end()) {
+            store = it->second.store;
+            launchId = it->second.launchId;
+            coverHint = it->second.coverHint;
         }
     }
-    pool_.start([this, appid] {
-        auto bytes = covers::coverBytes(appid);
+    pool_.start([this, appid, store, launchId, coverHint] {
+        auto bytes = store == Store::Steam
+                         ? covers::coverBytes(appid)
+                         : store_covers::coverBytes(store, launchId.toStdString(),
+                                                    coverHint.toStdString(), appid);
+        qInfo().nospace() << "[cover] " << storeName(store) << " id=" << appid
+                          << " hint=" << (coverHint.isEmpty() ? "(none)" : coverHint)
+                          << " -> " << (bytes ? qint64(bytes->size()) : -1) << " bytes";
         QString dataUrl;
         if (bytes) {
+            // Sniff the mime — Xbox logos are PNGs, Steam/network art is JPEG.
+            const bool png = bytes->size() > 4 && bytes->compare(1, 3, "PNG") == 0;
             QByteArray b64 = QByteArray::fromStdString(*bytes).toBase64();
-            dataUrl = "data:image/jpeg;base64," + QString::fromLatin1(b64);
+            dataUrl = QString(png ? "data:image/png;base64," : "data:image/jpeg;base64,") +
+                      QString::fromLatin1(b64);
         }
         QMetaObject::invokeMethod(this, [this, appid, dataUrl] {
             emit coverReady(appid, dataUrl);
@@ -281,7 +299,7 @@ void Backend::play(qint64 appid, bool offline) {
         } else {
             // Other stores just enumerate + fire their launch URI (no switching).
             IStore* store = nullptr;
-            for (auto& s : stores_) if (s->kind() == ref.store) { store = s.get(); break; }
+            for (auto& s : storeImpls_) if (s->kind() == ref.store) { store = s.get(); break; }
             if (store) {
                 Game g;
                 g.store = ref.store;

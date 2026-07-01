@@ -36,7 +36,7 @@ Item {
             Label {
                 text: root.label
                 color: root.fgColor
-                font.family: Theme.fontBody; font.pixelSize: 12.5; font.weight: Font.DemiBold
+                font.family: Theme.fontBody; font.pixelSize: 13; font.weight: Font.DemiBold
             }
         }
         MouseArea { anchors.fill: parent; hoverEnabled: true

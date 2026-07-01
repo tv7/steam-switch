@@ -220,7 +220,7 @@ Item {
                         Layout.bottomMargin: 28
                         text: root.launchExplainer()
                         color: Qt.rgba(1, 1, 1, 0.7)
-                        font.family: Theme.fontBody; font.pixelSize: 14.5; lineHeight: 1.5
+                        font.family: Theme.fontBody; font.pixelSize: 15; lineHeight: 1.5
                         wrapMode: Text.WordWrap
                     }
 

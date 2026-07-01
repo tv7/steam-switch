@@ -71,6 +71,34 @@ TEST_CASE(xbox_parse_config_display_falls_back_on_ms_resource) {
     CHECK_EQ(c->appId, std::string("App"));
 }
 
+TEST_CASE(xbox_real_config_reads_executable_id_not_executablelist) {
+    // Real ARC Raiders config (abridged): the launchable <Executable> lives inside
+    // <ExecutableList>. The AppId must come from it — NOT default to "Game" because
+    // the parser stopped at the <ExecutableList> prefix.
+    std::string xml = R"(<Game configVersion="1">
+  <Identity Name="Embark.arc-raiders" Publisher="CN=C8213C0F-4430-4083-8FB4-16A68674F2B4" Version="1.1233.4650.0" />
+  <ShellVisuals DefaultDisplayName="ARC Raiders" PublisherDisplayName="Embark" />
+  <ExecutableList>
+    <Executable Name="PioneerGame.exe" Id="AppARCRaidersShipping" TargetDeviceFamily="PC" />
+  </ExecutableList>
+</Game>)";
+    auto c = xbox::parseConfig(xml);
+    CHECK(c.has_value());
+    CHECK_EQ(c->displayName, std::string("ARC Raiders"));
+    CHECK_EQ(c->appId, std::string("AppARCRaidersShipping"));
+}
+
+TEST_CASE(xbox_dlc_stub_is_skipped) {
+    // Real BO6 DLC stub (abridged): no <Executable> — a content package, not a game.
+    std::string xml = R"(<Game configVersion="1">
+  <Identity Name="38985CA0.BO6DLC06BetaPack01" Publisher="CN=07A9AC0F-5502-4D92-BA69-01D5D39D1E92" Version="0.0.10.0" />
+  <ShellVisuals DefaultDisplayName="BO6 DLC06 Beta Pack 01" PublisherDisplayName="Activision Publishing Inc." />
+  <TargetDeviceFamilyForDLC>PC</TargetDeviceFamilyForDLC>
+  <DesktopRegistration><MainPackageDependency Name="38985CA0.COREBase" /></DesktopRegistration>
+</Game>)";
+    CHECK_EQ(xbox::parseConfig(xml).has_value(), false);
+}
+
 TEST_CASE(xbox_scan_finds_games_under_roots) {
     fs::path root = fs::temp_directory_path()
         / ("ss_xbox_" + std::to_string(ss::test::procId()) + "_" + std::to_string(rand()));

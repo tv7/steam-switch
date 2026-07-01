@@ -161,7 +161,7 @@ Item {
                                               : (modelData.ready ? qsTr("Ready to switch") : qsTr("Needs sign-in"))
                                         color: modelData.loggedIn ? AppState.accent
                                                : (modelData.ready ? Theme.faint : Theme.bad)
-                                        font.family: Theme.fontBody; font.pixelSize: 10.5; font.weight: Font.DemiBold
+                                        font.family: Theme.fontBody; font.pixelSize: 11; font.weight: Font.DemiBold
                                     }
                                 }
                                 Label { text: modelData.gameCount + qsTr(" games"); color: Theme.ghost
@@ -201,9 +201,9 @@ Item {
         implicitHeight: 44
         Label { anchors.left: parent.left; anchors.leftMargin: 15; anchors.verticalCenter: parent.verticalCenter
             text: label; color: Theme.muted; font.family: Theme.fontBody
-            font.pixelSize: 12.5; font.weight: Font.Medium }
+            font.pixelSize: 13; font.weight: Font.Medium }
         Label { anchors.right: parent.right; anchors.rightMargin: 15; anchors.verticalCenter: parent.verticalCenter
             text: value; color: valueColor; font.family: Theme.fontBody
-            font.pixelSize: 12.5; font.weight: Font.Bold }
+            font.pixelSize: 13; font.weight: Font.Bold }
     }
 }

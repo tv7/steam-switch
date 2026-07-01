@@ -129,7 +129,7 @@ Item {
             Label {
                 text: model.accountName
                 color: Theme.faint
-                font.family: Theme.fontBody; font.pixelSize: 11.5; font.weight: Font.Medium
+                font.family: Theme.fontBody; font.pixelSize: 12; font.weight: Font.Medium
                 elide: Text.ElideRight; width: parent.width - 13
             }
         }

@@ -10,11 +10,13 @@
 //   ssdiag gog          list installed GOG games + their launch commands
 //   ssdiag xbox         list installed Xbox/Game Pass games + their AUMIDs
 //   ssdiag covers <id>  resolve one cover (prints byte count / source)
+//   ssdiag storecovers  per-store cover diagnosis (local half: catcache/logo/URLs)
 //
 // Build with the core sources + platform_{win,posix}.cpp.
 
 #include "../core/covers.h"
 #include "../core/epic_games.h"
+#include "../core/store_covers.h"
 #include "../core/gog_games.h"
 #include "../core/model.h"
 #include "../core/xbox_games.h"
@@ -122,6 +124,29 @@ static void cmdXbox() {
     std::printf("\nTip: cross-check an AUMID against PowerShell `get-StartApps`.\n");
 }
 
+// The LOCAL half of per-store cover resolution (ssdiag has no HTTP transport, so
+// URLs are printed, not fetched — paste one in a browser to check the last hop).
+static void cmdStoreCovers() {
+    std::printf("== Epic ==\n");
+    for (const auto& g : epic::installedGames()) {
+        std::string url = store_covers::epicCoverUrl(g.coverHint);
+        std::printf("%-40s  CatalogItemId=%s\n    cover url: %s\n", g.name.c_str(),
+                    g.coverHint.empty() ? "(MISSING)" : g.coverHint.c_str(),
+                    url.empty() ? "(none — no catcache entry / no key image)" : url.c_str());
+    }
+    std::printf("\n== GOG ==\n");
+    for (const auto& g : gog::installedGames())
+        std::printf("%-40s  id=%s\n    api url: https://api.gog.com/v2/games/%s\n",
+                    g.name.c_str(), g.launchId.c_str(), g.launchId.c_str());
+    std::printf("\n== Xbox ==\n");
+    for (const auto& g : xbox::installedGames()) {
+        auto bytes = store_covers::coverBytes(Store::Xbox, g.launchId, g.coverHint, 0, false);
+        std::printf("%-40s\n    logo: %s  -> %s\n", g.name.c_str(),
+                    g.coverHint.empty() ? "(no logo declared)" : g.coverHint.c_str(),
+                    bytes ? (std::to_string(bytes->size()) + " bytes").c_str() : "UNREADABLE");
+    }
+}
+
 static void cmdCovers(int64_t appid) {
     auto bytes = covers::coverBytes(appid);
     if (bytes) std::printf("cover %lld: %zu bytes\n", (long long)appid, bytes->size());
@@ -137,6 +162,7 @@ int main(int argc, char** argv) {
     else if (cmd == "gog") cmdGog();
     else if (cmd == "xbox") cmdXbox();
     else if (cmd == "covers" && argc > 2) cmdCovers(std::stoll(argv[2]));
-    else { std::printf("usage: ssdiag [paths|games|accounts|epic|gog|xbox|covers <appid>]\n"); return 2; }
+    else if (cmd == "storecovers") cmdStoreCovers();
+    else { std::printf("usage: ssdiag [paths|games|accounts|epic|gog|xbox|covers <appid>|storecovers]\n"); return 2; }
     return 0;
 }

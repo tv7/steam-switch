@@ -100,11 +100,12 @@ private:
         qint64 appid = 0;          // real Steam appid, or 0 for non-Steam
         QString launchId;          // store-specific token (Epic AppName, …)
         QString name;
+        QString coverHint;         // per-store art hint (see model.h::Game)
     };
     std::map<qint64, GameRef> gameIndex_;   // synthetic-or-real id -> game, for play/cover
     std::mutex indexMutex_;
 
-    std::vector<std::unique_ptr<IStore>> stores_;
+    std::vector<std::unique_ptr<IStore>> storeImpls_;
     std::atomic<bool> cancel_{false};
     std::atomic<bool> launchGuard_{false};   // one launch at a time
     QThreadPool pool_;

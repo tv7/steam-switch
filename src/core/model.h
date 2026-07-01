@@ -31,6 +31,9 @@ struct Game {
     std::string library;          // library folder this game lives in
     bool fullyInstalled = false;
     std::string lastOwner;        // SteamID64 (Steam only)
+    std::string coverHint;        // store-specific art hint: Epic = CatalogItemId,
+                                  // Xbox = absolute path of the local logo PNG
+                                  // (GOG needs none — launchId is the product id)
 };
 
 // Port of accounts.py::Account (Steam logins from loginusers.vdf).

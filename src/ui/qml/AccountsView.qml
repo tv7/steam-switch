@@ -47,7 +47,7 @@ Flickable {
                             c.beginPath(); c.arc(7, 7, 5, Math.PI*0.15+Math.PI, Math.PI*1.15+Math.PI); c.stroke();
                             c.beginPath(); c.moveTo(11.6, 2.6); c.lineTo(12, 5.6); c.lineTo(9, 5.2); c.stroke(); } }
                     Label { text: qsTr("Re-run setup"); color: rerunHover.containsMouse ? "#fff" : Theme.muted
-                        font.family: Theme.fontBody; font.pixelSize: 12.5; font.weight: Font.DemiBold }
+                        font.family: Theme.fontBody; font.pixelSize: 13; font.weight: Font.DemiBold }
                 }
                 MouseArea { id: rerunHover; anchors.fill: parent; hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor; onClicked: AppState.startOnboarding() }

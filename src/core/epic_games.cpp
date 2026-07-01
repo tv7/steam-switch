@@ -92,6 +92,9 @@ std::vector<Game> installedGames() {
         // bIsIncompleteInstall is true while a download/repair is in flight.
         const json::Value* incomplete = m.get("bIsIncompleteInstall");
         g.fullyInstalled = !(incomplete && incomplete->asBool(false));
+        // CatalogItemId keys this game's entry (with its cover art URLs) in the
+        // launcher's catalog cache — see store_covers.cpp.
+        g.coverHint = getStr(m, "CatalogItemId");
         out.push_back(std::move(g));
     }
 

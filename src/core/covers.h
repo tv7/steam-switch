@@ -10,11 +10,16 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <utility>
 
 namespace ss::covers {
 
 // Raw image bytes of real Steam art for `appid`, or nullopt if nothing exists.
 // allow_network=false uses only on-disk sources (offline / tests).
 std::optional<std::string> coverBytes(int64_t appid, bool allowNetwork = true);
+
+// Pixel dimensions (w,h) parsed from raw PNG/JPEG bytes (exposed for tests; used
+// by the dimension-checked librarycache fallback for hidden demo/beta appids).
+std::optional<std::pair<int, int>> imageSize(const std::string& bytes);
 
 }  // namespace ss::covers

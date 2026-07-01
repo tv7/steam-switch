@@ -28,6 +28,11 @@ struct Config {
     std::string publisher;      // Identity/@Publisher (a full X.500 DN)
     std::string displayName;    // ShellVisuals/@DefaultDisplayName (falls back to Name)
     std::string appId;          // first Executable/@Id — the AUMID application id
+    std::string logoPath;       // ShellVisuals logo, relative to the Content dir
+                                // (best available of Square480x480Logo/StoreLogo/
+                                // Square150x150Logo; "" if none declared)
+    std::string storeId;        // <StoreId> element text — keys the game's real
+                                // cover art in the MS Store display catalog
 };
 
 // ---- pure builders (unit-tested) -------------------------------------------

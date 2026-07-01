@@ -139,7 +139,7 @@ Item {
                                         font.pixelSize: 8; font.weight: Font.Bold; font.letterSpacing: 0.6 } }
                             }
                             Label { text: root.descByKey[modelData.key] || ""
-                                color: Theme.faint; font.family: Theme.fontBody; font.pixelSize: 11.5
+                                color: Theme.faint; font.family: Theme.fontBody; font.pixelSize: 12
                                 elide: Text.ElideRight; Layout.fillWidth: true }
                         }
 

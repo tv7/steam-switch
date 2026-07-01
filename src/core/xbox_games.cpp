@@ -4,6 +4,7 @@
 #include "sha256.h"
 
 #include <algorithm>
+#include <cctype>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
@@ -36,11 +37,35 @@ std::string attr(const std::string& tag, const std::string& name) {
 // The opening tag text (`<Name ... >` contents, without the brackets) of the first
 // `<element` in `xml`, or "" if absent.
 std::string openTag(const std::string& xml, const std::string& element) {
-    auto pos = xml.find("<" + element);
-    if (pos == std::string::npos) return "";
-    auto end = xml.find('>', pos);
+    std::string needle = "<" + element;
+    std::size_t pos = 0;
+    while ((pos = xml.find(needle, pos)) != std::string::npos) {
+        // The char after the element name must be a tag delimiter, so `Executable`
+        // doesn't spuriously match `<ExecutableList>` (a prefix). Without this the
+        // real `<Executable Id="…">` inside `<ExecutableList>` is missed and the
+        // AppId (→ AUMID) is wrong.
+        char after = (pos + needle.size() < xml.size()) ? xml[pos + needle.size()] : '>';
+        if (after == ' ' || after == '\t' || after == '\r' || after == '\n' ||
+            after == '>' || after == '/') {
+            auto end = xml.find('>', pos);
+            if (end == std::string::npos) return "";
+            return xml.substr(pos, end - pos);
+        }
+        pos += needle.size();
+    }
+    return "";
+}
+
+// Text content of the first <element>text</element> in `xml`, or "".
+std::string elemText(const std::string& xml, const std::string& element) {
+    std::string open = openTag(xml, element);
+    if (open.empty()) return "";
+    auto start = xml.find(open);
+    if (start == std::string::npos) return "";
+    start += open.size() + 1;                       // past the '>'
+    auto end = xml.find("</" + element, start);
     if (end == std::string::npos) return "";
-    return xml.substr(pos, end - pos);
+    return xml.substr(start, end - start);
 }
 
 // UTF-16LE bytes of an ASCII string (publisher DNs are ASCII).
@@ -89,11 +114,23 @@ std::optional<Config> parseConfig(const std::string& xml) {
 
     std::string shell = openTag(xml, "ShellVisuals");
     std::string display = attr(shell, "DefaultDisplayName");
+    // Local cover art ships with the game: prefer the big square logo, then the
+    // store logo. Paths are relative to the Content dir (where the config lives).
+    for (const char* key : {"Square480x480Logo", "StoreLogo", "Square150x150Logo"}) {
+        std::string p = attr(shell, key);
+        if (!p.empty()) { c.logoPath = p; break; }
+    }
+    c.storeId = elemText(xml, "StoreId");
     // Some configs use an ms-resource: indirection we can't resolve — fall back.
     c.displayName = (display.empty() || display.rfind("ms-resource:", 0) == 0)
                         ? c.identityName : display;
 
+    // A launchable game declares an <Executable> (inside <ExecutableList>). DLC and
+    // pre-order/launch stubs (BO6/BO7 packs, "Game Stub", "Launch Tracker", …) have
+    // no executable — they carry <TargetDeviceFamilyForDLC>/<MainPackageDependency>
+    // instead — so skip them rather than surfacing fake tiles.
     std::string exe = openTag(xml, "Executable");
+    if (exe.empty()) return std::nullopt;
     c.appId = attr(exe, "Id");
     if (c.appId.empty()) c.appId = "Game";   // the near-universal default app id
     return c;
@@ -110,12 +147,26 @@ std::vector<std::string> installRoots() {
         if (!cur.empty()) roots.push_back(cur);
         return roots;
     }
-    // Default: <drive>:\XboxGames for each fixed drive letter (Game Pass makes this
-    // folder on whichever drive the user installs to).
+    // Game Pass installs into a folder on whichever drive the user picks. The Xbox
+    // app's default name is "XboxGames", but users who install to another drive
+    // sometimes name it differently ("xbox", "Xbox Games", …). Rather than hardcode
+    // the name, enumerate each drive's TOP-LEVEL folders (cheap — no deep scan) and
+    // treat any whose name contains "xbox" (case-insensitive) as an install root.
+    auto containsXbox = [](std::string name) {
+        std::transform(name.begin(), name.end(), name.begin(),
+                       [](unsigned char c) { return std::tolower(c); });
+        return name.find("xbox") != std::string::npos;
+    };
     std::error_code ec;
     for (char d = 'C'; d <= 'Z'; ++d) {
-        std::string root = std::string(1, d) + ":\\XboxGames";
-        if (fs::is_directory(root, ec)) roots.push_back(root);
+        std::string drive = std::string(1, d) + ":\\";
+        if (!fs::is_directory(drive, ec)) continue;
+        for (const auto& e : fs::directory_iterator(drive, ec)) {
+            if (ec) break;
+            std::error_code ec2;
+            if (e.is_directory(ec2) && containsXbox(e.path().filename().string()))
+                roots.push_back(e.path().string());
+        }
     }
     return roots;
 }
@@ -140,6 +191,18 @@ std::vector<Game> installedGames() {
             g.name = parsed->displayName;
             g.installdir = (gameDir.path() / "Content").string();
             g.fullyInstalled = true;
+            // Cover hint = "<StoreId>|<absolute logo path>" ('|' is illegal in
+            // Windows paths, so it's a safe separator). store_covers.cpp fetches
+            // the real box art from the MS Store display catalog by StoreId; the
+            // shipped logo PNG is the offline fallback (often a low-res or engine
+            // logo — e.g. UE's — so it must not be the primary source).
+            std::string logoAbs;
+            if (!parsed->logoPath.empty()) {
+                fs::path logo = fs::path(g.installdir) / parsed->logoPath;
+                if (fs::exists(logo, ec)) logoAbs = logo.string();
+            }
+            if (!parsed->storeId.empty() || !logoAbs.empty())
+                g.coverHint = parsed->storeId + "|" + logoAbs;
             out.push_back(std::move(g));
         }
     }
