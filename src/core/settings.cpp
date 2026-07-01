@@ -54,4 +54,17 @@ void setLanguage(const std::string& lang) {
     save(s);
 }
 
+bool onboarded() {
+    json::Value s = load();
+    if (const json::Value* v = s.get("onboarded"))
+        if (v->type == json::Value::Type::Bool) return v->b;
+    return false;
+}
+
+void setOnboarded(bool value) {
+    json::Value s = load();
+    s.set("onboarded", json::Value::makeBool(value));
+    save(s);
+}
+
 }  // namespace ss::settings

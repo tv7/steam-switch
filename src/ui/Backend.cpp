@@ -56,6 +56,7 @@ Backend::Backend(QObject* parent) : QObject(parent) {
     stores_.push_back(makeXboxStore());
     pool_.setMaxThreadCount(6);
     language_ = QString::fromStdString(settings::language());
+    onboarded_ = settings::onboarded();
 }
 
 void Backend::setSearch(const QString& text) { proxy_.setSearchText(text); }
@@ -68,6 +69,13 @@ void Backend::setLanguage(const QString& lang) {
     language_ = lang;
     settings::setLanguage(lang.toStdString());   // persist (parity with set_language)
     emit languageChanged();
+}
+
+void Backend::completeOnboarding() {
+    if (onboarded_) return;
+    onboarded_ = true;
+    settings::setOnboarded(true);                // persist so first-run runs once
+    emit onboardedChanged();
 }
 
 void Backend::setScanning(bool v) {

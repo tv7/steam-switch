@@ -23,6 +23,11 @@ QtObject {
     // Which store's Manage panel is open ("" = closed).
     property string manageKey: ""
 
+    // First-run onboarding overlay step: "" (closed) | "welcome" | "connect" | "done".
+    property string onboarding: ""
+    function startOnboarding() { onboarding = "welcome" }
+    function obGo(step) { onboarding = step }
+
     // Current filters (drive the backend proxy model).
     property string storeFilter: "all"     // "all" | store name ("Steam"/…)
     property string accountFilter: "all"    // "all" | steamid64 | "unmapped"

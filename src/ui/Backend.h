@@ -35,6 +35,7 @@ class Backend : public QObject {
     Q_PROPERTY(bool launching READ launching NOTIFY launchingChanged)
     Q_PROPERTY(QString language READ language NOTIFY languageChanged)
     Q_PROPERTY(bool rtl READ rtl NOTIFY languageChanged)
+    Q_PROPERTY(bool onboarded READ onboarded NOTIFY onboardedChanged)
 
 public:
     explicit Backend(QObject* parent = nullptr);
@@ -48,6 +49,7 @@ public:
     bool launching() const { return launching_; }
     QString language() const { return language_; }
     bool rtl() const { return language_ == "ar"; }
+    bool onboarded() const { return onboarded_; }
 
     // ---- invoked from QML (each returns immediately, works off-thread) ----
     Q_INVOKABLE void refresh();                       // ~ request_state
@@ -62,12 +64,14 @@ public:
     Q_INVOKABLE void setStoreFilter(const QString& store);
     Q_INVOKABLE void setSortOrder(const QString& order);   // "az" | "za"
     Q_INVOKABLE void setLanguage(const QString& lang);     // ~ set_language (persists)
+    Q_INVOKABLE void completeOnboarding();                 // persist onboarded=true
 
 signals:
     void stateChanged();
     void scanningChanged();
     void launchingChanged();
     void languageChanged();
+    void onboardedChanged();
     void coverReady(qint64 appid, const QString& dataUrl);
     void launchStarted();
     void status(const QString& message);
@@ -86,6 +90,7 @@ private:
     bool scanning_ = false;
     bool launching_ = false;
     QString language_;
+    bool onboarded_ = false;
 
     // A game's identity for launch/cover routing. Steam games are keyed by their
     // real appid; non-Steam stores (Epic, …) have no numeric id, so Backend hands

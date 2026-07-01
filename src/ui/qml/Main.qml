@@ -20,6 +20,9 @@ ApplicationWindow {
     LayoutMirroring.enabled: backend.rtl
     LayoutMirroring.childrenInherit: true
 
+    // Show the first-run onboarding until it's been completed once.
+    Component.onCompleted: if (!backend.onboarded) AppState.onboarding = "welcome"
+
     // transient status toast state
     property string toastText: ""
     property string toastKind: "info"     // info | good | bad
@@ -176,6 +179,9 @@ ApplicationWindow {
 
         // ---- Manage overlay ----
         ManagePanel {}
+
+        // ---- first-run onboarding overlay (on top of everything) ----
+        OnboardingOverlay {}
 
         // ---- status toast ----
         Rectangle {

@@ -14,4 +14,10 @@ std::string language();
 // Persist the selected UI language. Best-effort (swallows I/O errors like Python).
 void setLanguage(const std::string& lang);
 
+// Whether the first-run onboarding has been completed (default false = show it).
+bool onboarded();
+
+// Persist the onboarding-completed flag. Best-effort.
+void setOnboarded(bool value);
+
 }  // namespace ss::settings

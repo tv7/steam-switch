@@ -109,9 +109,15 @@ is already byte-identical.)
   accent (from its id) driving the ambient backdrop + placeholder gradient; real
   cover art layers on top. Typography is **Space Grotesk (display) + Manrope (body)**,
   instanced to static TTFs and bundled (Cairo covers Arabic). Backend gained a
-  `stores` model + a store filter on the proxy. All QML passes `qmllint` (Qt 6.11)
-  clean; not yet run on a display here (no Qt/GUI in the sandbox) — verify the
-  frameless window (translucency + `startSystemMove`/`startSystemResize`) and the
+  `stores` model + a store filter on the proxy. Also a **first-run onboarding
+  overlay** (`OnboardingOverlay.qml`: Welcome → Connect → Done) shown once, tracked
+  by a new `onboarded` flag in `settings.json` (`core/settings.*` +
+  `Backend.completeOnboarding()`); re-openable from Accounts → "Re-run setup". Its
+  "Connect" step is adapted to this app's reality — stores are auto-detected (no
+  OAuth), so it shows real per-store detection status and a Steam "Add account"
+  action + Rescan, not the mock's simulated connect toggles. All QML passes `qmllint`
+  (Qt 6.11) clean; not yet run on a display here (no Qt/GUI in the sandbox) — verify
+  the frameless window (translucency + `startSystemMove`/`startSystemResize`) and the
   `Canvas`-drawn icons on the real Windows build.
 - **All four stores done + the multi-store UI is in.** **Next:** `windeployqt`
   portable-zip packaging, then retire the Python/Tauri stack. (Per-store cover art

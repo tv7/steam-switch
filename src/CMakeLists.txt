@@ -82,6 +82,7 @@ if(Qt6_FOUND)
             ui/qml/AccountsView.qml
             ui/qml/SettingsView.qml
             ui/qml/ManagePanel.qml
+            ui/qml/OnboardingOverlay.qml
     )
     # Bundle the UI fonts into the binary so the typography ships without any system
     # install. ORBIT uses Space Grotesk (display) + Manrope (body); Cairo covers
