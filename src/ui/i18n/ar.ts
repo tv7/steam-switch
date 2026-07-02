@@ -10,23 +10,23 @@
     <message>
         <location filename="../qml/AccountsView.qml" line="43" />
         <source>Steam switches between accounts; other stores are detected from what's installed.</source>
-        <translation>يبدّل Steam بين الحسابات؛ بقية المتاجر تُكتشف مما هو مثبّت.</translation>
+        <translation>التبديل بين الحسابات متاح في Steam، أما بقية المتاجر فتُكتشف تلقائيًا حسب ما هو مثبّت على جهازك.</translation>
     </message>
     <message>
         <location filename="../qml/AccountsView.qml" line="54" />
         <source>Re-run setup</source>
-        <translation>إعادة تشغيل الإعداد</translation>
+        <translation>إعادة الإعداد</translation>
     </message>
     <message>
         <location filename="../qml/AccountsView.qml" line="68" />
         <source>STEAM — MULTI-ACCOUNT</source>
-        <translation>STEAM — تعدد الحسابات</translation>
+        <translation>STEAM — حسابات متعددة</translation>
     </message>
     <message numerus="yes">
         <location filename="../qml/AccountsView.qml" line="113" />
         <location filename="../qml/AccountsView.qml" line="243" />
         <source>%n game(s)</source>
-        <translation><numerusform>لا ألعاب</numerusform><numerusform>لعبة واحدة</numerusform><numerusform>لعبتان</numerusform><numerusform>%n ألعاب</numerusform><numerusform>%n لعبة</numerusform><numerusform>%n لعبة</numerusform></translation>
+        <translation><numerusform>لا توجد ألعاب</numerusform><numerusform>لعبة واحدة</numerusform><numerusform>لعبتان</numerusform><numerusform>%n ألعاب</numerusform><numerusform>%n لعبة</numerusform><numerusform>%n لعبة</numerusform></translation>
     </message>
     <message>
         <location filename="../qml/AccountsView.qml" line="120" />
@@ -41,7 +41,7 @@
     <message>
         <location filename="../qml/AccountsView.qml" line="123" />
         <source>⚠ Needs login</source>
-        <translation>⚠ يتطلب تسجيل الدخول</translation>
+        <translation>⚠ يلزم تسجيل الدخول</translation>
     </message>
     <message>
         <location filename="../qml/AccountsView.qml" line="138" />
@@ -51,7 +51,7 @@
     <message>
         <location filename="../qml/AccountsView.qml" line="139" />
         <source>Switch now</source>
-        <translation>بدّل الآن</translation>
+        <translation>التبديل الآن</translation>
     </message>
     <message>
         <location filename="../qml/AccountsView.qml" line="140" />
@@ -61,27 +61,27 @@
     <message>
         <location filename="../qml/AccountsView.qml" line="180" />
         <source>Add another Steam account</source>
-        <translation>أضف حساب Steam آخر</translation>
+        <translation>إضافة حساب Steam آخر</translation>
     </message>
     <message>
         <location filename="../qml/AccountsView.qml" line="186" />
         <source>Steam restarts to its sign-in screen. Log in once with “Remember me” and ORBIT can switch to it from then on.</source>
-        <translation>سيُعاد تشغيل Steam إلى شاشة تسجيل الدخول. سجّل الدخول مرة واحدة مع «تذكرني» وسيتمكن ORBIT من التبديل إليه لاحقًا.</translation>
+        <translation>سيُعاد تشغيل Steam وصولًا إلى شاشة تسجيل الدخول. سجّل دخولك مرة واحدة مع تفعيل «تذكرني»، وبعدها يتولى ORBIT التبديل إلى هذا الحساب متى شئت.</translation>
     </message>
     <message>
         <location filename="../qml/AccountsView.qml" line="200" />
         <source>OTHER STORES — AUTO-DETECTED</source>
-        <translation>متاجر أخرى — تُكتشف تلقائيًا</translation>
+        <translation>المتاجر الأخرى — اكتشاف تلقائي</translation>
     </message>
     <message>
         <location filename="../qml/AccountsView.qml" line="233" />
         <source>Detected on this PC</source>
-        <translation>مكتشف على هذا الجهاز</translation>
+        <translation>موجود على هذا الجهاز</translation>
     </message>
     <message>
         <location filename="../qml/AccountsView.qml" line="233" />
         <source>Nothing installed found</source>
-        <translation>لم يُعثر على شيء مثبّت</translation>
+        <translation>لم يُعثر على ألعاب مثبّتة</translation>
     </message>
     <message>
         <location filename="../qml/AccountsView.qml" line="239" />
@@ -101,7 +101,7 @@
     <message>
         <location filename="../qml/AccountsView.qml" line="272" />
         <source>Rescan — last scan %1</source>
-        <translation>إعادة الفحص — آخر فحص %1</translation>
+        <translation>إعادة الفحص — آخر فحص: %1</translation>
     </message>
     <message>
         <location filename="../qml/AccountsView.qml" line="273" />
@@ -119,7 +119,7 @@
     <message>
         <location filename="../qml/DetailView.qml" line="158" />
         <source>Installed</source>
-        <translation>مثبتة</translation>
+        <translation>مثبّتة</translation>
     </message>
     <message>
         <location filename="../qml/DetailView.qml" line="114" />
@@ -134,12 +134,12 @@
     <message>
         <location filename="../qml/DetailView.qml" line="162" />
         <source>✓ Account ready — no sign-in needed</source>
-        <translation>✓ الحساب جاهز — لا حاجة لتسجيل الدخول</translation>
+        <translation>✓ الحساب جاهز — لا حاجة إلى تسجيل الدخول</translation>
     </message>
     <message>
         <location filename="../qml/DetailView.qml" line="164" />
         <source>⚠ Needs one manual sign-in</source>
-        <translation>⚠ يتطلب تسجيل دخول يدويًا مرة واحدة</translation>
+        <translation>⚠ يلزم تسجيل الدخول يدويًا مرة واحدة</translation>
     </message>
     <message>
         <location filename="../qml/DetailView.qml" line="166" />
@@ -149,22 +149,22 @@
     <message>
         <location filename="../qml/DetailView.qml" line="168" />
         <source>Last played %1</source>
-        <translation>آخر لعب %1</translation>
+        <translation>آخر تشغيل %1</translation>
     </message>
     <message>
         <location filename="../qml/DetailView.qml" line="186" />
         <source>Launches straight through %1 — no account switch involved.</source>
-        <translation>تُشغَّل مباشرة عبر %1 — دون أي تبديل للحسابات.</translation>
+        <translation>تعمل هذه اللعبة مباشرة عبر %1 — دون أي تبديل للحسابات.</translation>
     </message>
     <message>
         <location filename="../qml/DetailView.qml" line="188" />
         <source>Play switches Steam to %1, waits for sign-in, then launches the game — no manual account swapping. Steam will close and restart.</source>
-        <translation>يبدّل «تشغيل» Steam إلى %1 وينتظر تسجيل الدخول ثم يشغّل اللعبة — دون تبديل يدوي للحسابات. سيُغلق Steam ويُعاد تشغيله.</translation>
+        <translation>عند الضغط على «العب الآن» يبدّل ORBIT حساب Steam إلى %1 وينتظر اكتمال تسجيل الدخول ثم يشغّل اللعبة — دون أي تبديل يدوي. سيُغلق Steam ويُعاد تشغيله أثناء ذلك.</translation>
     </message>
     <message>
         <location filename="../qml/DetailView.qml" line="189" />
         <source>No owning account found for this game yet. Pin it to an account and Play will switch to it.</source>
-        <translation>لم يُعثر على حساب مالك لهذه اللعبة بعد. ثبّتها على حساب وسيبدّل «تشغيل» إليه.</translation>
+        <translation>لم يتم التعرّف على الحساب المالك لهذه اللعبة بعد. ثبّتها على أحد الحسابات وسيتولى ORBIT التبديل إليه تلقائيًا.</translation>
     </message>
     <message>
         <location filename="../qml/DetailView.qml" line="208" />
@@ -204,7 +204,7 @@
     <message>
         <location filename="../qml/DetailView.qml" line="291" />
         <source>Unmapped</source>
-        <translation>غير مرتبطة</translation>
+        <translation>بدون حساب</translation>
     </message>
     <message>
         <location filename="../qml/DetailView.qml" line="295" />
@@ -219,7 +219,7 @@
     <message>
         <location filename="../qml/DetailView.qml" line="296" />
         <source>Installing / partial</source>
-        <translation>قيد التثبيت / جزئي</translation>
+        <translation>قيد التثبيت / غير مكتملة</translation>
     </message>
     <message>
         <location filename="../qml/DetailView.qml" line="300" />
@@ -247,7 +247,7 @@
     <message>
         <location filename="../qml/GameCard.qml" line="116" />
         <source>Play offline</source>
-        <translation>تشغيل بلا اتصال</translation>
+        <translation>تشغيل دون اتصال</translation>
     </message>
     <message>
         <location filename="../qml/GameCard.qml" line="117" />
@@ -275,7 +275,7 @@
     <message>
         <location filename="../qml/LibraryView.qml" line="135" />
         <source>Launches via %1</source>
-        <translation>تُشغَّل عبر %1</translation>
+        <translation>تعمل عبر %1</translation>
     </message>
     <message>
         <location filename="../qml/LibraryView.qml" line="137" />
@@ -285,17 +285,17 @@
     <message>
         <location filename="../qml/LibraryView.qml" line="139" />
         <source>Last played %1</source>
-        <translation>آخر لعب %1</translation>
+        <translation>آخر تشغيل %1</translation>
     </message>
     <message>
         <location filename="../qml/LibraryView.qml" line="154" />
         <source>Play now</source>
-        <translation>شغّل الآن</translation>
+        <translation>العب الآن</translation>
     </message>
     <message>
         <location filename="../qml/LibraryView.qml" line="170" />
         <source>Play offline</source>
-        <translation>شغّل دون اتصال</translation>
+        <translation>تشغيل دون اتصال</translation>
     </message>
     <message>
         <location filename="../qml/LibraryView.qml" line="183" />
@@ -305,32 +305,32 @@
     <message>
         <location filename="../qml/LibraryView.qml" line="195" />
         <source>No account switch needed — launches straight through %1.</source>
-        <translation>لا حاجة لتبديل الحساب — تُشغَّل مباشرة عبر %1.</translation>
+        <translation>لا حاجة إلى تبديل الحساب — تعمل مباشرة عبر %1.</translation>
     </message>
     <message>
         <location filename="../qml/LibraryView.qml" line="197" />
         <source>Play switches Steam to %1 and signs in — no manual account swapping.</source>
-        <translation>يبدّل «تشغيل» Steam إلى %1 ويسجّل الدخول — دون تبديل يدوي للحسابات.</translation>
+        <translation>سيبدّل ORBIT حساب Steam إلى %1 ويسجّل الدخول تلقائيًا — دون أي تبديل يدوي.</translation>
     </message>
     <message>
         <location filename="../qml/LibraryView.qml" line="198" />
         <source>This game isn't mapped to an account yet — open Details to pin one.</source>
-        <translation>هذه اللعبة غير مرتبطة بحساب بعد — افتح التفاصيل لتثبيت حساب.</translation>
+        <translation>هذه اللعبة غير مرتبطة بأي حساب بعد — افتح «التفاصيل» لتثبيتها على حساب.</translation>
     </message>
     <message>
         <location filename="../qml/LibraryView.qml" line="217" />
         <source>Continue playing</source>
-        <translation>متابعة اللعب</translation>
+        <translation>واصل اللعب</translation>
     </message>
     <message>
         <location filename="../qml/LibraryView.qml" line="244" />
         <source>No games installed</source>
-        <translation>لا توجد ألعاب مثبتة</translation>
+        <translation>لا توجد ألعاب مثبّتة</translation>
     </message>
     <message>
         <location filename="../qml/LibraryView.qml" line="249" />
         <source>Install a game in Steam, Epic, GOG or Game Pass and it will show up here.</source>
-        <translation>ثبّت لعبة في Steam أو Epic أو GOG أو Game Pass وستظهر هنا.</translation>
+        <translation>ثبّت أي لعبة من Steam أو Epic أو GOG أو Game Pass وستظهر هنا تلقائيًا.</translation>
     </message>
 </context>
 <context>
@@ -353,7 +353,7 @@
     <message numerus="yes">
         <location filename="../qml/Main.qml" line="145" />
         <source>Search %n game(s)…</source>
-        <translation><numerusform>ابحث في مكتبتك…</numerusform><numerusform>ابحث في لعبة واحدة…</numerusform><numerusform>ابحث في لعبتين…</numerusform><numerusform>ابحث في %n ألعاب…</numerusform><numerusform>ابحث في %n لعبة…</numerusform><numerusform>ابحث في %n لعبة…</numerusform></translation>
+        <translation><numerusform>ابحث في مكتبتك…</numerusform><numerusform>ابحث في لعبة واحدة…</numerusform><numerusform>ابحث في لعبتين…</numerusform><numerusform>ابحث بين %n ألعاب…</numerusform><numerusform>ابحث بين %n لعبة…</numerusform><numerusform>ابحث بين %n لعبة…</numerusform></translation>
     </message>
     <message>
         <location filename="../qml/Main.qml" line="183" />
@@ -363,7 +363,7 @@
     <message>
         <location filename="../qml/Main.qml" line="184" />
         <source>Steam signed out</source>
-        <translation>Steam غير مسجَّل الدخول</translation>
+        <translation>لم يتم تسجيل الدخول إلى Steam</translation>
     </message>
     <message>
         <location filename="../qml/Main.qml" line="204" />
@@ -376,22 +376,22 @@
     <message>
         <location filename="../qml/OnboardingOverlay.qml" line="19" />
         <source>Your biggest library — and the only store that switches accounts</source>
-        <translation>أكبر مكتباتك — والمتجر الوحيد الذي يدعم تبديل الحسابات</translation>
+        <translation>أكبر مكتبة لديك — والمتجر الوحيد الذي يتيح تبديل الحسابات</translation>
     </message>
     <message>
         <location filename="../qml/OnboardingOverlay.qml" line="20" />
         <source>Free weekly games &amp; exclusives</source>
-        <translation>ألعاب أسبوعية مجانية وحصريات</translation>
+        <translation>ألعاب مجانية كل أسبوع وعناوين حصرية</translation>
     </message>
     <message>
         <location filename="../qml/OnboardingOverlay.qml" line="21" />
         <source>DRM-free classics &amp; GOG Galaxy</source>
-        <translation>كلاسيكيات خالية من DRM مع GOG Galaxy</translation>
+        <translation>ألعاب كلاسيكية بلا حماية DRM مع GOG Galaxy</translation>
     </message>
     <message>
         <location filename="../qml/OnboardingOverlay.qml" line="22" />
         <source>Hundreds of Game Pass titles</source>
-        <translation>مئات ألعاب Game Pass</translation>
+        <translation>مئات الألعاب عبر Game Pass</translation>
     </message>
     <message>
         <location filename="../qml/OnboardingOverlay.qml" line="60" />
@@ -401,12 +401,12 @@
     <message>
         <location filename="../qml/OnboardingOverlay.qml" line="65" />
         <source>One library for every game you own. ORBIT gathers your Steam, Epic, GOG and Xbox Game Pass games onto a single shelf — and switches Steam accounts for you.</source>
-        <translation>مكتبة واحدة لكل ألعابك. يجمع ORBIT ألعابك من Steam وEpic وGOG وXbox Game Pass على رفّ واحد — ويبدّل حسابات Steam نيابةً عنك.</translation>
+        <translation>مكتبة واحدة تجمع كل ألعابك. يجمع ORBIT ألعابك من Steam وEpic وGOG وXbox Game Pass في مكان واحد — ويتولى تبديل حسابات Steam عنك.</translation>
     </message>
     <message>
         <location filename="../qml/OnboardingOverlay.qml" line="71" />
         <source>Get started</source>
-        <translation>ابدأ</translation>
+        <translation>ابدأ الآن</translation>
     </message>
     <message>
         <location filename="../qml/OnboardingOverlay.qml" line="93" />
@@ -416,7 +416,7 @@
     <message>
         <location filename="../qml/OnboardingOverlay.qml" line="98" />
         <source>ORBIT finds installed games automatically. Sign in to a Steam account (with “Remember me”) to switch between accounts.</source>
-        <translation>يكتشف ORBIT الألعاب المثبتة تلقائيًا. سجّل الدخول إلى حساب Steam (مع تفعيل ”تذكرني“) للتبديل بين الحسابات.</translation>
+        <translation>يكتشف ORBIT الألعاب المثبتة تلقائيًا. سجّل الدخول إلى حساب Steam مع تفعيل «تذكرني» لتتمكن من التبديل بين الحسابات.</translation>
     </message>
     <message>
         <location filename="../qml/OnboardingOverlay.qml" line="134" />
@@ -426,7 +426,7 @@
     <message>
         <location filename="../qml/OnboardingOverlay.qml" line="159" />
         <source> of 4 stores detected</source>
-        <translation> من 4 متاجر مكتشفة</translation>
+        <translation> من أصل 4 متاجر</translation>
     </message>
     <message>
         <location filename="../qml/OnboardingOverlay.qml" line="162" />
@@ -436,12 +436,12 @@
     <message>
         <location filename="../qml/OnboardingOverlay.qml" line="162" />
         <source>Rescan</source>
-        <translation>إعادة فحص</translation>
+        <translation>إعادة الفحص</translation>
     </message>
     <message>
         <location filename="../qml/OnboardingOverlay.qml" line="164" />
         <source>Skip for now</source>
-        <translation>تخطٍّ الآن</translation>
+        <translation>تخطّي الآن</translation>
     </message>
     <message>
         <location filename="../qml/OnboardingOverlay.qml" line="165" />
@@ -456,7 +456,7 @@
     <message>
         <location filename="../qml/OnboardingOverlay.qml" line="197" />
         <source>%1 games found across %2 stores. Your library is ready.</source>
-        <translation>عُثر على %1 لعبة في %2 من المتاجر. مكتبتك جاهزة.</translation>
+        <translation>تم العثور على %1 لعبة عبر %2 من المتاجر — مكتبتك جاهزة.</translation>
     </message>
     <message>
         <location filename="../qml/OnboardingOverlay.qml" line="204" />
@@ -471,7 +471,7 @@
     <message>
         <location filename="../qml/OnboardingOverlay.qml" line="242" />
         <source>Detected</source>
-        <translation>مكتشف</translation>
+        <translation>موجود</translation>
     </message>
     <message>
         <location filename="../qml/OnboardingOverlay.qml" line="242" />
@@ -494,7 +494,7 @@
     <message>
         <location filename="../qml/SearchPalette.qml" line="179" />
         <source>No games match “%1”</source>
-        <translation>لا ألعاب تطابق «%1»</translation>
+        <translation>لا توجد ألعاب تطابق «%1»</translation>
     </message>
     <message>
         <location filename="../qml/SearchPalette.qml" line="180" />
@@ -557,7 +557,7 @@
     <message>
         <location filename="../qml/SettingsView.qml" line="126" />
         <source>Preferences persist in settings.json next to the app.</source>
-        <translation>تُحفظ التفضيلات في settings.json بجوار التطبيق.</translation>
+        <translation>تُحفظ التفضيلات في ملف settings.json بجوار التطبيق.</translation>
     </message>
     <message>
         <location filename="../qml/SettingsView.qml" line="130" />
@@ -567,7 +567,7 @@
     <message>
         <location filename="../qml/SettingsView.qml" line="134" />
         <source>New launches bring Steam up offline after a brief sign-in — shared-account friendly, cloud saves untouched.</source>
-        <translation>تُقلع عمليات التشغيل الجديدة بـ Steam دون اتصال بعد تسجيل دخول وجيز — مناسب للحساب المشترك ولا يمس حفظ السحابة.</translation>
+        <translation>عند التفعيل، يبدأ Steam بوضع عدم الاتصال بعد تسجيل دخول سريع — مناسب للحسابات المشتركة، ودون المساس بالحفظ السحابي.</translation>
     </message>
     <message>
         <location filename="../qml/SettingsView.qml" line="144" />
@@ -577,7 +577,7 @@
     <message>
         <location filename="../qml/SettingsView.qml" line="145" />
         <source>Start ORBIT when you sign into Windows (adds a registry Run entry for this exe).</source>
-        <translation>تشغيل ORBIT عند تسجيل دخولك إلى Windows (يضيف إدخال Run في السجل لهذا الملف التنفيذي).</translation>
+        <translation>يبدأ ORBIT تلقائيًا عند تسجيل دخولك إلى Windows (بإضافة إدخال Run في السجل).</translation>
     </message>
     <message>
         <location filename="../qml/SettingsView.qml" line="154" />
@@ -587,22 +587,22 @@
     <message>
         <location filename="../qml/SettingsView.qml" line="158" />
         <source>Display language — العربية flips the whole layout right-to-left.</source>
-        <translation>لغة العرض — العربية تقلب التخطيط كاملًا من اليمين إلى اليسار.</translation>
+        <translation>لغة العرض — عند اختيار العربية ينقلب اتجاه الواجهة كاملًا من اليمين إلى اليسار.</translation>
     </message>
     <message>
         <location filename="../qml/SettingsView.qml" line="167" />
         <source>Hero banner</source>
-        <translation>اللافتة الرئيسية</translation>
+        <translation>البانر الرئيسي</translation>
     </message>
     <message>
         <location filename="../qml/SettingsView.qml" line="168" />
         <source>What the big banner shows when the library opens.</source>
-        <translation>ما تعرضه اللافتة الكبيرة عند فتح المكتبة.</translation>
+        <translation>ما يعرضه البانر الكبير عند فتح المكتبة.</translation>
     </message>
     <message>
         <location filename="../qml/SettingsView.qml" line="170" />
         <source>Last played</source>
-        <translation>آخر ما لُعب</translation>
+        <translation>آخر ما لعبته</translation>
     </message>
     <message>
         <location filename="../qml/SettingsView.qml" line="171" />
@@ -622,12 +622,12 @@
     <message>
         <location filename="../qml/SettingsView.qml" line="184" />
         <source>Re-detect installed games and accounts across all stores. Last scan: %1.</source>
-        <translation>إعادة اكتشاف الألعاب والحسابات المثبتة عبر جميع المتاجر. آخر فحص: %1.</translation>
+        <translation>إعادة اكتشاف الألعاب والحسابات في جميع المتاجر. آخر فحص: %1.</translation>
     </message>
     <message>
         <location filename="../qml/SettingsView.qml" line="185" />
         <source>Re-detect installed games and accounts across all stores.</source>
-        <translation>إعادة اكتشاف الألعاب والحسابات المثبتة عبر جميع المتاجر.</translation>
+        <translation>إعادة اكتشاف الألعاب والحسابات في جميع المتاجر.</translation>
     </message>
     <message>
         <location filename="../qml/SettingsView.qml" line="187" />
@@ -637,32 +637,32 @@
     <message>
         <location filename="../qml/SettingsView.qml" line="187" />
         <source>⟳ Rescan now</source>
-        <translation>⟳ أعد الفحص الآن</translation>
+        <translation>⟳ إعادة الفحص الآن</translation>
     </message>
     <message>
         <location filename="../qml/SettingsView.qml" line="193" />
         <source>Cover art cache</source>
-        <translation>ذاكرة أغلفة الألعاب</translation>
+        <translation>ذاكرة التخزين المؤقت للأغلفة</translation>
     </message>
     <message>
         <location filename="../qml/SettingsView.qml" line="194" />
         <source>Downloaded covers are cached on disk so store APIs are hit at most once per game. Currently %1.</source>
-        <translation>تُخزَّن الأغلفة المنزّلة على القرص حتى لا تُستدعى واجهات المتاجر أكثر من مرة لكل لعبة. حاليًا %1.</translation>
+        <translation>تُحفظ الأغلفة المنزّلة على القرص كي لا تُستدعى واجهة المتجر أكثر من مرة لكل لعبة. حاليًا: %1.</translation>
     </message>
     <message>
         <location filename="../qml/SettingsView.qml" line="196" />
         <source>Clear cache</source>
-        <translation>مسح الذاكرة</translation>
+        <translation>مسح الذاكرة المؤقتة</translation>
     </message>
     <message>
         <location filename="../qml/SettingsView.qml" line="204" />
         <source>Tip: if every account is your own, Steam Families may remove the need to switch at all. ORBIT never types passwords — accounts must be signed in once with “Remember me”.</source>
-        <translation>نصيحة: إذا كانت كل الحسابات ملكك فقد تغنيك «عائلات Steam» عن التبديل نهائيًا. لا يكتب ORBIT كلمات المرور أبدًا — يجب تسجيل الدخول إلى الحسابات مرة واحدة مع «تذكرني».</translation>
+        <translation>نصيحة: إذا كانت جميع الحسابات لك، فقد تغنيك خدمة «عائلة Steam» عن التبديل تمامًا. لا يُدخل ORBIT كلمات المرور أبدًا — يكفي تسجيل الدخول إلى كل حساب مرة واحدة مع تفعيل «تذكرني».</translation>
     </message>
     <message>
         <location filename="../qml/SettingsView.qml" line="133" />
         <source>Launch offline by default</source>
-        <translation>التشغيل بلا اتصال افتراضيًا</translation>
+        <translation>التشغيل دون اتصال افتراضيًا</translation>
     </message>
     <message>
         <location filename="../qml/SettingsView.qml" line="157" />
@@ -675,7 +675,7 @@
     <message numerus="yes">
         <location filename="../qml/Shelf.qml" line="32" />
         <source>%n game(s)</source>
-        <translation><numerusform>لا ألعاب</numerusform><numerusform>لعبة واحدة</numerusform><numerusform>لعبتان</numerusform><numerusform>%n ألعاب</numerusform><numerusform>%n لعبة</numerusform><numerusform>%n لعبة</numerusform></translation>
+        <translation><numerusform>لا توجد ألعاب</numerusform><numerusform>لعبة واحدة</numerusform><numerusform>لعبتان</numerusform><numerusform>%n ألعاب</numerusform><numerusform>%n لعبة</numerusform><numerusform>%n لعبة</numerusform></translation>
     </message>
 </context>
 <context>
@@ -693,7 +693,7 @@
     <message>
         <location filename="../qml/Theme.qml" line="88" />
         <source>just now</source>
-        <translation>الآن</translation>
+        <translation>قبل قليل</translation>
     </message>
     <message>
         <location filename="../qml/Theme.qml" line="89" />
@@ -716,22 +716,22 @@
     <message>
         <location filename="../Backend.cpp" line="107" />
         <source>Couldn't update the Windows startup entry.</source>
-        <translation>تعذّر تحديث إدخال بدء تشغيل Windows.</translation>
+        <translation>تعذّر تحديث إدخال بدء التشغيل في Windows.</translation>
     </message>
     <message>
         <location filename="../Backend.cpp" line="118" />
         <source>Cleared %1 cached covers.</source>
-        <translation>تم مسح %1 من الأغلفة المخزنة.</translation>
+        <translation>تم مسح %1 من الأغلفة المخزّنة مؤقتًا.</translation>
     </message>
     <message>
         <location filename="../Backend.cpp" line="251" />
         <source>Unmapped</source>
-        <translation>غير مرتبطة</translation>
+        <translation>بدون حساب</translation>
     </message>
     <message>
         <location filename="../Backend.cpp" line="371" />
         <source>A launch is already in progress.</source>
-        <translation>هناك عملية تشغيل جارية بالفعل.</translation>
+        <translation>هناك عملية تشغيل قيد التنفيذ بالفعل.</translation>
     </message>
 </context>
 </TS>
