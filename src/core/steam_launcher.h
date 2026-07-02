@@ -22,4 +22,10 @@ namespace ss::steam {
 PlayResult play(int64_t appid, bool offline = false, double loginWaitSec = 120.0,
                 const Notify& notify = {}, const switcher::ShouldCancel& shouldCancel = {});
 
+// Switch Steam to `steamid64` and restart it WITHOUT launching anything — the
+// Accounts screen's "Switch now" action. Same validated sequence as the online
+// launch (shutdown -> switchAccount -> start -> picker login), minus the game.
+PlayResult switchTo(const std::string& steamid64, double loginWaitSec = 120.0,
+                    const Notify& notify = {}, const switcher::ShouldCancel& shouldCancel = {});
+
 }  // namespace ss::steam

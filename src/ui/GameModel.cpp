@@ -19,6 +19,8 @@ QVariant GameModel::data(const QModelIndex& index, int role) const {
         case AccountNameRole: return r.accountName;
         case AccountColorRole: return r.accountColor;
         case MappedRole: return r.mapped;
+        case PlaytimeRole: return r.playtime;
+        case LastPlayedRole: return r.lastPlayed;
         default: return {};
     }
 }
@@ -29,6 +31,7 @@ QHash<int, QByteArray> GameModel::roleNames() const {
         {FullyInstalledRole, "fullyInstalled"}, {AccountIdRole, "accountId"},
         {AccountNameRole, "accountName"}, {AccountColorRole, "accountColor"},
         {MappedRole, "mapped"},
+        {PlaytimeRole, "playtime"}, {LastPlayedRole, "lastPlayed"},
     };
 }
 

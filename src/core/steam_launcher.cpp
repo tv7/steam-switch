@@ -208,4 +208,49 @@ PlayResult play(int64_t appid, bool offline, double loginWaitSec,
     return PlayResult::success("Launching on '" + account->personaName + "'.", true);
 }
 
+PlayResult switchTo(const std::string& steamid64, double loginWaitSec,
+                    const Notify& notify, const sw::ShouldCancel& shouldCancel) {
+    auto cancelled = [&]() { return shouldCancel && shouldCancel(); };
+    auto note = [&](const std::string& m) { if (notify) notify(m); };
+
+    auto accts = listAccounts();
+    const Account* account = findAccount(accts, steamid64);
+    if (!account)
+        return PlayResult::fail("Account " + steamid64 + " isn't logged in on this PC.");
+
+    if (sw::isLoggedInAs(account->steamid64))
+        return PlayResult::success("Steam is already on '" + account->personaName + "'.");
+
+    auto [ok, why] = sw::canAutologin(account->accountName);
+    if (!ok)
+        return PlayResult::fail("Can't auto-login to '" + account->personaName + "': " + why +
+                                ". Log into that account in Steam once with \"Remember me\" checked, "
+                                "then try again.", false, true);
+
+    if (cancelled()) return PlayResult::fail("Switch cancelled.");
+
+    note("Closing Steam to switch accounts…");
+    if (!sw::shutdownSteam())
+        return PlayResult::fail("Couldn't close Steam to switch accounts. Close it manually "
+                                "(tray icon -> Exit) and try again.");
+    if (cancelled()) return PlayResult::fail("Switch cancelled before switching accounts.");
+
+    sw::switchAccount(account->accountName);
+    if (cancelled())
+        return PlayResult::fail("Switch cancelled. Steam is set to '" + account->personaName +
+                                "' but wasn't started.", true);
+    sw::startSteam();
+    note("Steam is restarting. When the account picker appears, click '" + account->personaName +
+         "' (no password needed) to log in.");
+
+    bool loggedIn = sw::waitForLogin(account->steamid64, loginWaitSec, 1.0, shouldCancel);
+    if (cancelled()) return PlayResult::fail("Switch cancelled.", true);
+    if (!loggedIn)
+        return PlayResult::fail("Steam isn't logged in as '" + account->personaName + "' yet — "
+                                "finish the picker login (only enter a password if Steam asks, "
+                                "which means the saved login expired).", true, true);
+
+    return PlayResult::success("Steam is now on '" + account->personaName + "'.", true);
+}
+
 }  // namespace ss::steam

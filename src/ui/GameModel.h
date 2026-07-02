@@ -24,6 +24,10 @@ struct GameRow {
     QString accountName;        // persona, "Unmapped" if none
     QColor accountColor;        // per-account palette color (or unmapped red)
     bool mapped = false;
+    // Truthful usage: Steam = owning account's localconfig.vdf; other stores =
+    // ORBIT's own launch history (playtime stays 0 — unknown, never faked).
+    qint64 playtime = 0;        // minutes
+    qint64 lastPlayed = 0;      // unix seconds (0 = never/unknown)
 };
 
 class GameModel : public QAbstractListModel {
@@ -33,6 +37,7 @@ public:
         AppidRole = Qt::UserRole + 1,
         StoreRole, NameRole, FullyInstalledRole,
         AccountIdRole, AccountNameRole, AccountColorRole, MappedRole,
+        PlaytimeRole, LastPlayedRole,
     };
 
     explicit GameModel(QObject* parent = nullptr) : QAbstractListModel(parent) {}

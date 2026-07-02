@@ -1,5 +1,6 @@
 #include "Backend.h"
 
+#include "../core/autostart.h"
 #include "../core/covers.h"
 #include "../core/store_covers.h"
 #include "../core/settings.h"
@@ -8,7 +9,10 @@
 #include "../core/steam_switcher.h"
 
 #include <QBuffer>
+#include <QCoreApplication>
+#include <QDateTime>
 #include <QDebug>
+#include <QDir>
 #include <QMetaObject>
 #include <QStringList>
 #include <QThread>
@@ -16,6 +20,7 @@
 #include <QVariantMap>
 
 #include <map>
+#include <set>
 
 namespace ss::ui {
 
@@ -51,6 +56,11 @@ StoreBrand storeBrand(Store s) {
 }
 QString storeColor(Store s) { return storeBrand(s).color; }
 
+// Store-scoped key for ORBIT's own launch history (settings.json).
+std::string launchKey(Store store, const std::string& launchId) {
+    return std::string(storeName(store)) + ":" + launchId;
+}
+
 }  // namespace
 
 Backend::Backend(QObject* parent) : QObject(parent) {
@@ -62,12 +72,49 @@ Backend::Backend(QObject* parent) : QObject(parent) {
     pool_.setMaxThreadCount(6);
     language_ = QString::fromStdString(settings::language());
     onboarded_ = settings::onboarded();
+    heroMode_ = QString::fromStdString(settings::heroMode());
+    offlineDefault_ = settings::offlineDefault();
+    runAtStartup_ = autostart::enabled();
 }
 
 void Backend::setSearch(const QString& text) { proxy_.setSearchText(text); }
 void Backend::setAccountFilter(const QString& filter) { proxy_.setAccountFilter(filter); }
 void Backend::setStoreFilter(const QString& store) { proxy_.setStoreFilter(store); }
-void Backend::setSortOrder(const QString& order) { proxy_.setSortAscending(order != "za"); }
+void Backend::setSortOrder(const QString& order) { proxy_.setSortMode(order); }
+
+void Backend::setHeroMode(const QString& mode) {
+    if (heroMode_ == mode) return;
+    heroMode_ = mode;
+    settings::setHeroMode(mode.toStdString());
+    emit heroModeChanged();
+}
+
+void Backend::setOfflineDefault(bool value) {
+    if (offlineDefault_ == value) return;
+    offlineDefault_ = value;
+    settings::setOfflineDefault(value);
+    emit offlineDefaultChanged();
+}
+
+bool Backend::autostartSupported() const { return autostart::supported(); }
+
+void Backend::setRunAtStartup(bool value) {
+    const std::string exe = QDir::toNativeSeparators(
+        QCoreApplication::applicationFilePath()).toStdString();
+    if (!autostart::setEnabled(value, exe)) {
+        emit status(tr("Couldn't update the Windows startup entry."));
+        return;
+    }
+    runAtStartup_ = autostart::enabled();
+    emit runAtStartupChanged();
+}
+
+qint64 Backend::coverCacheSize() const { return covers::cacheSizeBytes(); }
+
+void Backend::clearCoverCache() {
+    int n = covers::clearCache();
+    emit status(tr("Cleared %1 cached covers.").arg(n));
+}
 
 void Backend::setLanguage(const QString& lang) {
     if (lang == language_) return;
@@ -104,6 +151,10 @@ void Backend::refresh() {
 }
 
 void Backend::buildState() {
+    // A rescan must re-read reality: drop the core's owner/usage caches so newly
+    // installed games, fresh playtime and account changes show up.
+    steam::clearCaches();
+
     // Accounts + a stable color per account by position.
     std::vector<Account> accts;
     for (auto& s : storeImpls_) {
@@ -134,6 +185,13 @@ void Backend::buildState() {
     // Game rows across all stores, decorated with the owning account.
     std::map<std::string, QString> personaById;
     for (const auto& a : accts) personaById[a.steamid64] = QString::fromStdString(a.personaName);
+
+    // ORBIT's own launch history — the truthful lastPlayed for non-Steam stores.
+    const auto history = settings::launchHistory();
+    auto historyFor = [&](Store store, const QString& launchId) -> qint64 {
+        auto it = history.find(launchKey(store, launchId.toStdString()));
+        return it == history.end() ? 0 : (qint64)it->second;
+    };
 
     std::vector<GameRow> rows;
     std::map<std::string, int> gameCounts;   // steamid64 -> #games (port of counts)
@@ -170,11 +228,22 @@ void Backend::buildState() {
                 r.accountName = personaById[*sid];
                 r.accountColor = QColor(color.count(*sid) ? color[*sid] : kUnmappedColor);
                 gameCounts[*sid]++;
+                // Truthful usage from the owning account's localconfig.vdf (bulk
+                // map: one parse per account per scan).
+                const auto& usage = steam::accountUsageMap(*sid);
+                auto uit = usage.find(g.appid);
+                if (uit != usage.end()) {
+                    r.playtime = uit->second.playtime;
+                    r.lastPlayed = uit->second.lastPlayed;
+                }
             } else if (g.store != Store::Steam) {
                 // Non-Steam game: no account to switch — label it by its store.
                 r.mapped = true;   // not "unmapped" (that's a Steam-only state)
                 r.accountName = QString::fromUtf8(storeName(g.store));
                 r.accountColor = QColor(storeColor(g.store));
+                // No store-side usage data — ORBIT's own launch history only
+                // (playtime stays 0: unknown, never faked).
+                r.lastPlayed = historyFor(g.store, r.launchId);
             } else {
                 r.mapped = false;
                 r.accountName = tr("Unmapped");
@@ -218,6 +287,7 @@ void Backend::buildState() {
         stores_ = storeCards;
         currentAccount_ = current;
         model_.setRows(std::move(rows));
+        lastScanTime_ = QDateTime::currentSecsSinceEpoch();
         scanning_ = false;
         emit scanningChanged();
         emit stateChanged();
@@ -258,6 +328,64 @@ void Backend::requestCover(qint64 appid) {
         QMetaObject::invokeMethod(this, [this, appid, dataUrl] {
             emit coverReady(appid, dataUrl);
         }, Qt::QueuedConnection);
+    });
+}
+
+void Backend::requestHero(qint64 appid) {
+    Store store = Store::Steam;
+    QString launchId, coverHint;
+    {
+        std::lock_guard<std::mutex> lk(indexMutex_);
+        auto it = gameIndex_.find(appid);
+        if (it != gameIndex_.end()) {
+            store = it->second.store;
+            launchId = it->second.launchId;
+            coverHint = it->second.coverHint;
+        }
+    }
+    pool_.start([this, appid, store, launchId, coverHint] {
+        auto bytes = store == Store::Steam
+                         ? covers::heroBytes(appid)
+                         : store_covers::heroBytes(store, launchId.toStdString(),
+                                                   coverHint.toStdString(), appid);
+        qInfo().nospace() << "[hero] " << storeName(store) << " id=" << appid
+                          << " -> " << (bytes ? qint64(bytes->size()) : -1) << " bytes";
+        QString dataUrl;
+        if (bytes) {
+            const bool png = bytes->size() > 4 && bytes->compare(1, 3, "PNG") == 0;
+            QByteArray b64 = QByteArray::fromStdString(*bytes).toBase64();
+            dataUrl = QString(png ? "data:image/png;base64," : "data:image/jpeg;base64,") +
+                      QString::fromLatin1(b64);
+        }
+        QMetaObject::invokeMethod(this, [this, appid, dataUrl] {
+            emit heroReady(appid, dataUrl);
+        }, Qt::QueuedConnection);
+    });
+}
+
+void Backend::switchTo(const QString& steamid64) {
+    bool expected = false;
+    if (!launchGuard_.compare_exchange_strong(expected, true)) {
+        emit status(tr("A launch is already in progress."));
+        return;  // switching tears down Steam — same one-at-a-time guard as play()
+    }
+    cancel_ = false;
+    setLaunching(true);
+    emit launchStarted();
+    pool_.start([this, steamid64] {
+        auto notify = [this](const std::string& m) {
+            QString msg = QString::fromStdString(m);
+            QMetaObject::invokeMethod(this, [this, msg] { emit status(msg); }, Qt::QueuedConnection);
+        };
+        auto shouldCancel = [this] { return cancel_.load(); };
+        PlayResult res = steam::switchTo(steamid64.toStdString(), 120.0, notify, shouldCancel);
+        launchGuard_ = false;
+        QMetaObject::invokeMethod(this, [this, res] {
+            launching_ = false;
+            emit launchingChanged();
+            emit launchDone(res.ok, QString::fromStdString(res.message));
+        }, Qt::QueuedConnection);
+        refresh();   // logged-in badges changed
     });
 }
 
@@ -314,6 +442,11 @@ void Backend::play(qint64 appid, bool offline) {
                 res = PlayResult::fail("That store isn't available.");
             }
         }
+        // A real launch went out: record it in ORBIT's history (drives the
+        // truthful lastPlayed/shelf ordering for non-Steam stores).
+        if (res.ok && !ref.launchId.isEmpty())
+            settings::recordLaunch(launchKey(ref.store, ref.launchId.toStdString()),
+                                   QDateTime::currentSecsSinceEpoch());
         launchGuard_ = false;
         QMetaObject::invokeMethod(this, [this, res] {
             launching_ = false;

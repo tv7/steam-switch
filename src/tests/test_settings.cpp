@@ -49,3 +49,18 @@ TEST_CASE(launch_history_records_and_reads_back) {
     CHECK_EQ(settings::launchHistory().size(), (size_t)2);
     fs::remove_all(data);
 }
+
+TEST_CASE(settings_hero_mode_and_offline_default) {
+    fs::path data = fs::temp_directory_path() / ("ss_set4_" + std::to_string(ss::test::procId()) + "_" + std::to_string(rand()));
+    appdata::setDir(data);
+    CHECK_EQ(settings::heroMode(), std::string("last"));      // default
+    CHECK_EQ(settings::offlineDefault(), false);              // default
+    settings::setHeroMode("random");
+    CHECK_EQ(settings::heroMode(), std::string("random"));
+    settings::setHeroMode("garbage");                          // sanitised
+    CHECK_EQ(settings::heroMode(), std::string("last"));
+    settings::setOfflineDefault(true);
+    CHECK_EQ(settings::offlineDefault(), true);
+    CHECK_EQ(settings::language(), std::string("en"));         // others untouched
+    fs::remove_all(data);
+}

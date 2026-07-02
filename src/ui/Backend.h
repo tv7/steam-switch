@@ -27,6 +27,7 @@ namespace ss::ui {
 class Backend : public QObject {
     Q_OBJECT
     Q_PROPERTY(QAbstractItemModel* games READ games CONSTANT)
+    Q_PROPERTY(QAbstractItemModel* allGames READ allGames CONSTANT)
     Q_PROPERTY(QVariantList accounts READ accounts NOTIFY stateChanged)
     Q_PROPERTY(QVariantList stores READ stores NOTIFY stateChanged)
     Q_PROPERTY(QString currentAccount READ currentAccount NOTIFY stateChanged)
@@ -36,11 +37,20 @@ class Backend : public QObject {
     Q_PROPERTY(QString language READ language NOTIFY languageChanged)
     Q_PROPERTY(bool rtl READ rtl NOTIFY languageChanged)
     Q_PROPERTY(bool onboarded READ onboarded NOTIFY onboardedChanged)
+    // CINEMA-era surface: hero banner mode, offline default, run-at-startup and
+    // the library scan timestamp (Settings > Library "Last scan").
+    Q_PROPERTY(QString heroMode READ heroMode NOTIFY heroModeChanged)
+    Q_PROPERTY(bool offlineDefault READ offlineDefault NOTIFY offlineDefaultChanged)
+    Q_PROPERTY(bool autostartSupported READ autostartSupported CONSTANT)
+    Q_PROPERTY(bool runAtStartup READ runAtStartup NOTIFY runAtStartupChanged)
+    Q_PROPERTY(qint64 lastScanTime READ lastScanTime NOTIFY stateChanged)
 
 public:
     explicit Backend(QObject* parent = nullptr);
 
     QAbstractItemModel* games() { return &proxy_; }
+    // The unfiltered scanned model — shelves layer their own GameFilter over it.
+    QAbstractItemModel* allGames() { return &model_; }
     QVariantList accounts() const { return accounts_; }
     QVariantList stores() const { return stores_; }
     QString currentAccount() const { return currentAccount_; }
@@ -50,14 +60,26 @@ public:
     QString language() const { return language_; }
     bool rtl() const { return language_ == "ar"; }
     bool onboarded() const { return onboarded_; }
+    QString heroMode() const { return heroMode_; }
+    bool offlineDefault() const { return offlineDefault_; }
+    bool autostartSupported() const;
+    bool runAtStartup() const { return runAtStartup_; }
+    qint64 lastScanTime() const { return lastScanTime_; }
 
     // ---- invoked from QML (each returns immediately, works off-thread) ----
     Q_INVOKABLE void refresh();                       // ~ request_state
     Q_INVOKABLE void requestCover(qint64 appid);      // ~ request_cover -> coverReady
+    Q_INVOKABLE void requestHero(qint64 appid);       // wide art -> heroReady
     Q_INVOKABLE void play(qint64 appid, bool offline);// ~ play
     Q_INVOKABLE void cancel();                        // ~ cancel
     Q_INVOKABLE void addAccount();                    // ~ add_account
     Q_INVOKABLE void pinToAccount(qint64 appid, const QString& steamid64);  // override
+    Q_INVOKABLE void switchTo(const QString& steamid64);  // switch+restart Steam, NO launch
+    Q_INVOKABLE void setHeroMode(const QString& mode);    // "last" | "random" (persists)
+    Q_INVOKABLE void setOfflineDefault(bool value);       // persists
+    Q_INVOKABLE void setRunAtStartup(bool value);         // HKCU Run key (Windows)
+    Q_INVOKABLE qint64 coverCacheSize() const;            // bytes under data/covers/
+    Q_INVOKABLE void clearCoverCache();                   // wipe it (emits status)
     // Search / filter / sort drive the proxy model (web/app.js visibleGames()).
     Q_INVOKABLE void setSearch(const QString& text);
     Q_INVOKABLE void setAccountFilter(const QString& filter);
@@ -72,7 +94,11 @@ signals:
     void launchingChanged();
     void languageChanged();
     void onboardedChanged();
+    void heroModeChanged();
+    void offlineDefaultChanged();
+    void runAtStartupChanged();
     void coverReady(qint64 appid, const QString& dataUrl);
+    void heroReady(qint64 appid, const QString& dataUrl);
     void launchStarted();
     void status(const QString& message);
     void launchDone(bool ok, const QString& message);
@@ -91,6 +117,10 @@ private:
     bool launching_ = false;
     QString language_;
     bool onboarded_ = false;
+    QString heroMode_ = "last";
+    bool offlineDefault_ = false;
+    bool runAtStartup_ = false;
+    qint64 lastScanTime_ = 0;
 
     // A game's identity for launch/cover routing. Steam games are keyed by their
     // real appid; non-Steam stores (Epic, …) have no numeric id, so Backend hands

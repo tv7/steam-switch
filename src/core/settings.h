@@ -21,6 +21,15 @@ bool onboarded();
 // Persist the onboarding-completed flag. Best-effort.
 void setOnboarded(bool value);
 
+// What the CINEMA hero banner shows when the library opens: "last" (last-played
+// game) or "random"; "last" if unset/garbage.
+std::string heroMode();
+void setHeroMode(const std::string& mode);
+
+// "Launch offline by default" (the Settings toggle; default false).
+bool offlineDefault();
+void setOfflineDefault(bool value);
+
 // ---- ORBIT launch history ----------------------------------------------------
 // Steam knows real playtime/lastPlayed (localconfig.vdf); the other stores don't
 // expose one, so ORBIT records its own successful launches — a truthful

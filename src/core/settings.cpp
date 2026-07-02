@@ -67,6 +67,32 @@ void setOnboarded(bool value) {
     save(s);
 }
 
+std::string heroMode() {
+    json::Value s = load();
+    if (const json::Value* v = s.get("hero_mode"))
+        if (v->isString() && v->str == "random") return "random";
+    return "last";
+}
+
+void setHeroMode(const std::string& mode) {
+    json::Value s = load();
+    s.set("hero_mode", json::Value::makeString(mode == "random" ? "random" : "last"));
+    save(s);
+}
+
+bool offlineDefault() {
+    json::Value s = load();
+    if (const json::Value* v = s.get("offline_default"))
+        if (v->type == json::Value::Type::Bool) return v->b;
+    return false;
+}
+
+void setOfflineDefault(bool value) {
+    json::Value s = load();
+    s.set("offline_default", json::Value::makeBool(value));
+    save(s);
+}
+
 std::map<std::string, long long> launchHistory() {
     std::map<std::string, long long> out;
     json::Value s = load();
