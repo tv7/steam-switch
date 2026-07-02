@@ -129,5 +129,27 @@ is already byte-identical.)
   `ui/icons/` and wired three ways: `ui/orbit.rc` (Explorer/taskbar), `setWindowIcon`
   (Alt-Tab/titlebar), and a `/icons` Qt resource used by the QML brand marks. The
   full CINEMA redesign plan is at `design/ORBIT-REDESIGN-PLAN.md`.
-- **Next:** CINEMA redesign Phases 1–4 (hero + shelves UI), `windeployqt`
-  portable-zip packaging, then retire the Python/Tauri stack.
+- **CINEMA redesign implemented (Phases 1–4, 2026-07-02):** per
+  `design/ORBIT-REDESIGN-PLAN.md` + the `design/m1-*.html` previews.
+  Core (headless, 59 tests): per-account bulk usage map, ORBIT launch history in
+  settings.json, hero/wide art resolvers for all four stores, run-at-startup
+  (HKCU Run + `platform::regDeleteValue`), cover-cache size/clear, persisted
+  heroMode/offlineDefault, `steam::switchTo` (switch without launching).
+  Backend: playtime/lastPlayed roles, `requestHero`/`heroReady`, QML-instantiable
+  `GameFilter` (per-shelf live filters + `gameAt`), switchTo/setRunAtStartup/
+  setHeroMode/setOfflineDefault/coverCacheSize/clearCoverCache/lastScanTime,
+  launch-history recording on successful play. QML: top-bar shell (tabs + Ctrl-K
+  search + status pill + offline pill + avatar), library hero + shelves, detail
+  as hero takeover with pin-to-account, Ctrl-K palette (↵ play / Shift+↵ offline
+  / Tab details), CINEMA accounts + settings, restyled onboarding. Arabic
+  catalog regenerated: 140 strings, all translated, `ar.qm` prebuilt.
+- **Windows verification checklist (CINEMA):** icon in taskbar/Alt-Tab/Explorer;
+  hero art per store (Steam `library_hero`, Xbox TitledHeroArt, Epic
+  DieselGameBox, GOG background); Continue-playing shelf ordering (Steam
+  playtime + ORBIT history after launching a non-Steam game); Ctrl-K palette
+  keys; Accounts "Switch now" (switches + restarts Steam, no launch);
+  Settings run-at-startup writes/removes `HKCU\...\CurrentVersion\Run\ORBIT`;
+  cover-cache size/clear; Arabic/RTL across the new screens; frameless
+  drag/resize still works with the new top bar.
+- **Next:** `windeployqt` portable-zip packaging, then retire the Python/Tauri
+  stack.
