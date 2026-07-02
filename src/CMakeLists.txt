@@ -57,13 +57,22 @@ add_test(NAME sstests COMMAND sstests)
 find_package(Qt6 COMPONENTS Core Gui Quick Network QUIET)
 if(Qt6_FOUND)
     qt_standard_project_setup(REQUIRES 6.5)
+    # Headers are listed explicitly: qmltyperegistrar needs them in the target's
+    # sources to emit the right #include for QML_ELEMENT types (GameFilterModel) —
+    # without this the generated orbit_qmltyperegistrations.cpp fails to compile.
     qt_add_executable(Orbit
         ui/main.cpp
         ui/Backend.cpp
+        ui/Backend.h
         ui/GameModel.cpp
+        ui/GameModel.h
         ui/GameFilterModel.cpp
+        ui/GameFilterModel.h
         ui/QtFetcher.cpp
+        ui/QtFetcher.h
     )
+    # The generated registration file includes the header by basename.
+    target_include_directories(Orbit PRIVATE ui)
     # Windows: embed orbit.ico into the exe (taskbar / Explorer / Alt-Tab icon).
     if(WIN32)
         target_sources(Orbit PRIVATE ui/orbit.rc)
