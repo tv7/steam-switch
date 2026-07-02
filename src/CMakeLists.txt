@@ -12,6 +12,7 @@ set(CORE_SOURCES
     core/json.cpp
     core/http.cpp
     core/appdata.cpp
+    core/autostart.cpp
     core/settings.cpp
     core/steam_paths.cpp
     core/steam_games.cpp

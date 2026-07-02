@@ -17,6 +17,7 @@ namespace {
 
 std::optional<std::map<int64_t, std::string>> g_localOwner;
 std::optional<std::map<int64_t, std::vector<std::string>>> g_userdata;
+std::map<std::string, std::map<int64_t, Usage>> g_usage;   // steamid64 -> per-app usage
 
 bool isDigits(const std::string& s) {
     if (s.empty()) return false;
@@ -56,7 +57,7 @@ void saveMapping(const json::Value& m) {
 
 }  // namespace
 
-void clearCaches() { g_localOwner.reset(); g_userdata.reset(); }
+void clearCaches() { g_localOwner.reset(); g_userdata.reset(); g_usage.clear(); }
 
 std::vector<Account> listAccounts(const std::optional<fs::path>& rootIn) {
     auto root = rootIn ? rootIn : steamRoot();
@@ -146,6 +147,39 @@ Usage appUsage(int64_t appid, const std::string& steamid64, const std::optional<
         if (!ec) u.mtime = (double)t.time_since_epoch().count();
     }
     return u;
+}
+
+const std::map<int64_t, Usage>& accountUsageMap(const std::string& steamid64,
+                                                const std::optional<fs::path>& rootIn,
+                                                bool refresh) {
+    auto it = g_usage.find(steamid64);
+    if (it != g_usage.end() && !refresh) return it->second;
+    std::map<int64_t, Usage>& out = g_usage[steamid64];
+    out.clear();
+    auto root = rootIn ? rootIn : steamRoot();
+    if (!root) return out;
+    long long accountid32 = 0;
+    try { accountid32 = std::stoll(steamid64) - kSteamId64Base; } catch (...) { return out; }
+    fs::path cfg = *root / "userdata" / std::to_string(accountid32) / "config" / "localconfig.vdf";
+    std::error_code ec;
+    if (!fs::exists(cfg, ec)) return out;
+    vdf::Value data = vdf::load(cfg.string());
+    const vdf::Value* node = &data;
+    const char* path[] = {"UserLocalConfigStore", "Software", "Valve", "Steam", "apps"};
+    for (const char* key : path) {
+        node = node->getCI(key);
+        if (!node) return out;
+    }
+    for (const auto& kv : node->map) {
+        if (!isDigits(kv.first) || !kv.second.is_map) continue;
+        Usage u;
+        if (const vdf::Value* pt = kv.second.getCI("Playtime"))
+            { try { u.playtime = std::stoll(pt->str); } catch (...) { u.playtime = 0; } }
+        if (const vdf::Value* lp = kv.second.getCI("LastPlayed"))
+            { try { u.lastPlayed = std::stoll(lp->str); } catch (...) { u.lastPlayed = 0; } }
+        if (u.playtime || u.lastPlayed) out[std::stoll(kv.first)] = u;
+    }
+    return out;
 }
 
 void setApiKey(const std::string& steamid64, const std::string& apiKey) {

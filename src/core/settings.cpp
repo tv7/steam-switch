@@ -67,4 +67,30 @@ void setOnboarded(bool value) {
     save(s);
 }
 
+std::map<std::string, long long> launchHistory() {
+    std::map<std::string, long long> out;
+    json::Value s = load();
+    if (const json::Value* h = s.get("launch_history"))
+        if (h->isObject())
+            for (const auto& kv : h->obj)
+                if (kv.second.type == json::Value::Type::Number && kv.second.num > 0)
+                    out[kv.first] = (long long)kv.second.num;
+    return out;
+}
+
+long long lastLaunched(const std::string& gameKey) {
+    auto h = launchHistory();
+    auto it = h.find(gameKey);
+    return it == h.end() ? 0 : it->second;
+}
+
+void recordLaunch(const std::string& gameKey, long long unixSeconds) {
+    if (gameKey.empty() || unixSeconds <= 0) return;
+    json::Value s = load();
+    if (!s.get("launch_history") || !s.get("launch_history")->isObject())
+        s.set("launch_history", json::Value::makeObject());
+    s.get("launch_history")->set(gameKey, json::Value::makeNumber((double)unixSeconds));
+    save(s);
+}
+
 }  // namespace ss::settings

@@ -113,6 +113,16 @@ bool regWriteDword(Hive hive, const std::string& subkey, const std::string& name
     return r == ERROR_SUCCESS;
 }
 
+bool regDeleteValue(Hive hive, const std::string& subkey, const std::string& name) {
+    HKEY key;
+    LONG r = RegOpenKeyExW(hiveHandle(hive), widen(subkey).c_str(), 0, KEY_SET_VALUE, &key);
+    if (r == ERROR_FILE_NOT_FOUND) return true;   // no key -> nothing to delete
+    if (r != ERROR_SUCCESS) return false;
+    r = RegDeleteValueW(key, widen(name).c_str());
+    RegCloseKey(key);
+    return r == ERROR_SUCCESS || r == ERROR_FILE_NOT_FOUND;
+}
+
 std::vector<std::string> regSubKeys(Hive hive, const std::string& subkey) {
     std::vector<std::string> out;
     HKEY key;

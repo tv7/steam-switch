@@ -34,6 +34,13 @@ struct Usage { long long playtime = 0; long long lastPlayed = 0; double mtime = 
 Usage appUsage(int64_t appid, const std::string& steamid64,
                const std::optional<fs::path>& root = std::nullopt);
 
+// Bulk version for decorating the whole library: {appid: Usage} for one account,
+// parsed from its localconfig.vdf in a single pass (no per-app folder mtime — that
+// stays a tiebreak-only detail of appUsage). Cached per account; refresh rebuilds.
+const std::map<int64_t, Usage>& accountUsageMap(
+    const std::string& steamid64,
+    const std::optional<fs::path>& root = std::nullopt, bool refresh = false);
+
 // Mapping store (data/mapping.json): overrides / api_keys / owned.
 void setApiKey(const std::string& steamid64, const std::string& apiKey);
 void setOverride(int64_t appid, const std::string& steamid64);

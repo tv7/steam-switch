@@ -101,3 +101,57 @@ TEST_CASE(cover_offline_returns_nullopt_when_nothing_local) {
     CHECK(!bytes.has_value());
     fs::remove_all(data);
 }
+
+TEST_CASE(hero_local_then_cdn_then_caches) {
+    // Local librarycache library_hero.jpg wins without network; when absent, the
+    // flat CDN hero is fetched and disk-cached under <appid>_hero.jpg.
+    fs::path root = fs::temp_directory_path()
+        / ("ss_hero_" + std::to_string(ss::test::procId()) + "_" + std::to_string(rand()));
+    fs::path data = root / "appdata";
+    appdata::setDir(data);
+    fs::path lc = root / "steam" / "appcache" / "librarycache" / "555";
+    fs::create_directories(lc);
+    fs::create_directories(root / "steam" / "steamapps");
+    std::ofstream(root / "steam" / "steamapps" / "libraryfolders.vdf") << "\"libraryfolders\"{}";
+    std::ofstream(lc / "library_hero.jpg", std::ios::binary) << "LOCALHERO";
+    ss::test::setEnv("STEAM_ROOT", (root / "steam").string());
+
+    int calls = 0;
+    http::setFetcher([&](const std::string& url) -> std::optional<std::string> {
+        ++calls;
+        if (url.find("/666/library_hero.jpg") != std::string::npos) return std::string("CDNHERO");
+        return std::nullopt;
+    });
+
+    auto local = covers::heroBytes(555);
+    CHECK(local.has_value());
+    CHECK_EQ(*local, std::string("LOCALHERO"));
+    CHECK_EQ(calls, 0);                                   // local hit, no network
+
+    auto net = covers::heroBytes(666);
+    CHECK(net.has_value());
+    CHECK_EQ(*net, std::string("CDNHERO"));
+    CHECK(fs::exists(data / "covers" / "666_hero.jpg"));  // network hit cached
+    int after = calls;
+    auto again = covers::heroBytes(666);
+    CHECK(again.has_value());
+    CHECK_EQ(calls, after);                               // served from disk cache
+
+    http::setFetcher({});
+    fs::remove_all(root);
+}
+
+TEST_CASE(cover_cache_size_and_clear) {
+    fs::path data = fs::temp_directory_path()
+        / ("ss_cc_" + std::to_string(ss::test::procId()) + "_" + std::to_string(rand()));
+    appdata::setDir(data);
+    CHECK_EQ(covers::cacheSizeBytes(), 0LL);              // no dir yet
+    fs::create_directories(data / "covers");
+    std::ofstream(data / "covers" / "1.jpg", std::ios::binary) << "12345";
+    std::ofstream(data / "covers" / "2_hero.jpg", std::ios::binary) << "1234567";
+    CHECK_EQ(covers::cacheSizeBytes(), 12LL);
+    CHECK_EQ(covers::clearCache(), 2);
+    CHECK_EQ(covers::cacheSizeBytes(), 0LL);
+    CHECK_EQ(covers::clearCache(), 0);                    // idempotent
+    fs::remove_all(data);
+}

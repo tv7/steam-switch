@@ -101,3 +101,27 @@ TEST_CASE(unmapped_returns_nullopt) {
     CHECK(!sid.has_value());
     fs::remove_all(root);
 }
+
+TEST_CASE(account_usage_map_bulk_matches_app_usage) {
+    auto root = makeTree();
+    std::string bob = std::to_string(kSteamId64Base + 2);
+    const auto& usage = steam::accountUsageMap(bob);
+    CHECK_EQ(usage.size(), (size_t)1);
+    CHECK(usage.count(200) == 1);
+    CHECK_EQ(usage.at(200).playtime, 600LL);
+    CHECK_EQ(usage.at(200).lastPlayed, 2000LL);
+    // Agrees with the per-app reader used by the tiebreak.
+    auto single = steam::appUsage(200, bob);
+    CHECK_EQ(usage.at(200).playtime, single.playtime);
+    CHECK_EQ(usage.at(200).lastPlayed, single.lastPlayed);
+    fs::remove_all(root);
+}
+
+TEST_CASE(account_usage_map_missing_account_is_empty) {
+    auto root = makeTree();
+    const auto& usage = steam::accountUsageMap(std::to_string(kSteamId64Base + 42));
+    CHECK(usage.empty());
+    // Bad ids don't throw either.
+    CHECK(steam::accountUsageMap("not-a-steamid").empty());
+    fs::remove_all(root);
+}

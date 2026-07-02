@@ -17,6 +17,7 @@ namespace {
 
 fs::path coverDir() { return appdata::dir() / "covers"; }
 fs::path diskPath(int64_t appid) { return coverDir() / (std::to_string(appid) + ".jpg"); }
+fs::path heroDiskPath(int64_t appid) { return coverDir() / (std::to_string(appid) + "_hero.jpg"); }
 
 std::optional<std::string> readFile(const fs::path& p) {
     std::error_code ec;
@@ -28,24 +29,28 @@ std::optional<std::string> readFile(const fs::path& p) {
     return data;
 }
 
-void saveDisk(int64_t appid, const std::string& data) {
+void saveFile(const fs::path& p, const std::string& data) {
     std::error_code ec;
     fs::create_directories(coverDir(), ec);
-    std::ofstream f(diskPath(appid), std::ios::binary | std::ios::trunc);
+    std::ofstream f(p, std::ios::binary | std::ios::trunc);
     if (f) f.write(data.data(), (std::streamsize)data.size());
 }
+void saveDisk(int64_t appid, const std::string& data) { saveFile(diskPath(appid), data); }
 
-// Steam's cached portrait for an installed app, under its KNOWN filename only.
+// Steam's cached art for an installed app, under a KNOWN filename only.
 // (Never glob hashed names — that grabs low-res logos; see the memory.)
-std::optional<std::string> localSteam(int64_t appid) {
+std::optional<std::string> localSteamAsset(int64_t appid, const char* asset) {
     auto root = steam::steamRoot();
     if (!root) return std::nullopt;
     fs::path cache = *root / "appcache" / "librarycache";
-    for (const fs::path& cand : {cache / std::to_string(appid) / "library_600x900.jpg",
-                                 cache / (std::to_string(appid) + "_library_600x900.jpg")}) {
+    for (const fs::path& cand : {cache / std::to_string(appid) / asset,
+                                 cache / (std::to_string(appid) + "_" + asset)}) {
         if (auto data = readFile(cand)) return data;
     }
     return std::nullopt;
+}
+std::optional<std::string> localSteam(int64_t appid) {
+    return localSteamAsset(appid, "library_600x900.jpg");
 }
 
 // LAST-RESORT local source for apps with no store art anywhere (hidden demo/beta
@@ -81,14 +86,16 @@ std::optional<std::string> localSteamHashedPortrait(int64_t appid) {
     return best;
 }
 
-std::optional<std::string> legacyCdn(int64_t appid) {
-    const char* assets[] = {"library_600x900.jpg", "header.jpg", "capsule_616x353.jpg"};
+std::optional<std::string> legacyCdnAssets(int64_t appid, std::initializer_list<const char*> assets) {
     for (const char* asset : assets) {
         std::string url = "https://cdn.cloudflare.steamstatic.com/steam/apps/" +
                           std::to_string(appid) + "/" + asset;
         if (auto data = http::get(url)) return data;
     }
     return std::nullopt;
+}
+std::optional<std::string> legacyCdn(int64_t appid) {
+    return legacyCdnAssets(appid, {"library_600x900.jpg", "header.jpg", "capsule_616x353.jpg"});
 }
 
 // Ask the store API for the live (hashed) art URL and fetch it.
@@ -154,6 +161,47 @@ std::optional<std::string> coverBytes(int64_t appid, bool allowNetwork) {
     }
     // Nothing anywhere else (hidden demos/betas) — dimension-checked local scan.
     return localSteamHashedPortrait(appid);
+}
+
+std::optional<std::string> heroBytes(int64_t appid, bool allowNetwork) {
+    // Steam's current hero first (seasonal art), then our network cache.
+    if (auto local = localSteamAsset(appid, "library_hero.jpg")) return local;
+    if (auto cached = readFile(heroDiskPath(appid))) return cached;
+    if (allowNetwork) {
+        // Flat CDN still serves older apps' hero; header.jpg / appdetails
+        // header_image are the wide fallbacks for the rest.
+        if (auto data = legacyCdnAssets(appid, {"library_hero.jpg", "header.jpg"})) {
+            saveFile(heroDiskPath(appid), *data);
+            return data;
+        }
+        if (auto data = appDetails(appid)) {
+            saveFile(heroDiskPath(appid), *data);
+            return data;
+        }
+    }
+    return std::nullopt;
+}
+
+long long cacheSizeBytes() {
+    long long total = 0;
+    std::error_code ec;
+    if (!fs::is_directory(coverDir(), ec)) return 0;
+    for (const auto& entry : fs::directory_iterator(coverDir(), ec)) {
+        if (ec) break;
+        if (entry.is_regular_file(ec)) total += (long long)entry.file_size(ec);
+    }
+    return total;
+}
+
+int clearCache() {
+    int removed = 0;
+    std::error_code ec;
+    if (!fs::is_directory(coverDir(), ec)) return 0;
+    for (const auto& entry : fs::directory_iterator(coverDir(), ec)) {
+        if (ec) break;
+        if (entry.is_regular_file(ec) && fs::remove(entry.path(), ec)) ++removed;
+    }
+    return removed;
 }
 
 }  // namespace ss::covers

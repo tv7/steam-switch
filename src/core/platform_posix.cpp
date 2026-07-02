@@ -17,6 +17,7 @@ std::optional<std::string> regReadString(Hive, const std::string&, const std::st
 std::optional<uint32_t>    regReadDword (Hive, const std::string&, const std::string&) { return std::nullopt; }
 bool regWriteString(Hive, const std::string&, const std::string&, const std::string&) { return false; }
 bool regWriteDword (Hive, const std::string&, const std::string&, uint32_t) { return false; }
+bool regDeleteValue(Hive, const std::string&, const std::string&) { return false; }
 std::vector<std::string> regSubKeys(Hive, const std::string&) { return {}; }
 
 static int runv(const std::string& cmd) { return std::system(cmd.c_str()); }

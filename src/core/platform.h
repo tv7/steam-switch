@@ -23,6 +23,10 @@ std::optional<uint32_t>    regReadDword (Hive hive, const std::string& subkey, c
 bool regWriteString(Hive hive, const std::string& subkey, const std::string& name, const std::string& value);
 bool regWriteDword (Hive hive, const std::string& subkey, const std::string& name, uint32_t value);
 
+// Delete a value from a key. True if it was deleted OR was already absent
+// (idempotent — used to turn off run-at-startup); false on real errors/POSIX.
+bool regDeleteValue(Hive hive, const std::string& subkey, const std::string& name);
+
 // Immediate subkey names under a registry key (for GOG's HKLM\...\GOG.com\Games\<id>
 // enumeration). Empty on POSIX / missing key.
 std::vector<std::string> regSubKeys(Hive hive, const std::string& subkey);

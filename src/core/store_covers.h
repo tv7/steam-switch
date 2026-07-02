@@ -27,6 +27,15 @@ std::optional<std::string> coverBytes(Store store, const std::string& launchId,
                                       const std::string& coverHint, int64_t cacheId,
                                       bool allowNetwork = true);
 
+// Wide/hero art variant (the CINEMA hero banner), cached as <cacheId>_hero.jpg:
+//   * Xbox — display catalog TitledHeroArt / SuperHeroArt (real store banners).
+//   * Epic — catcache keyImages DieselGameBox (landscape).
+//   * GOG — v2 games API backgroundImage (v1 background fallback).
+// Network-only sources except the disk cache; nullopt when offline/absent.
+std::optional<std::string> heroBytes(Store store, const std::string& launchId,
+                                     const std::string& coverHint, int64_t cacheId,
+                                     bool allowNetwork = true);
+
 // ---- exposed for tests / ssdiag ---------------------------------------------
 // Resolve `catalogItemId`'s cover URL from the launcher's catcache.bin on disk
 // ("" = cache missing/unreadable or no entry). The local half of the Epic path.
@@ -37,5 +46,8 @@ std::optional<std::string> base64Decode(const std::string& in);
 // (prefers the portrait DieselGameBoxTall, then DieselGameBox); "" if absent.
 std::string epicCoverUrlFromCatalog(const std::string& catalogJson,
                                     const std::string& catalogItemId);
+// Same, for the wide hero art (DieselGameBox first, then the tall box).
+std::string epicHeroUrlFromCatalog(const std::string& catalogJson,
+                                   const std::string& catalogItemId);
 
 }  // namespace ss::store_covers

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <map>
 #include <string>
 
 namespace ss::settings {
@@ -19,5 +20,21 @@ bool onboarded();
 
 // Persist the onboarding-completed flag. Best-effort.
 void setOnboarded(bool value);
+
+// ---- ORBIT launch history ----------------------------------------------------
+// Steam knows real playtime/lastPlayed (localconfig.vdf); the other stores don't
+// expose one, so ORBIT records its own successful launches — a truthful
+// "last played (via ORBIT)" for shelf ordering. Keys are store-scoped so they
+// never collide across stores: "<storeName>:<launchId>" (e.g. "Epic:Fortnite",
+// "Steam:730").
+
+// {gameKey: unix seconds of the last successful launch}; empty if none recorded.
+std::map<std::string, long long> launchHistory();
+
+// Unix seconds this game was last launched through ORBIT (0 = never).
+long long lastLaunched(const std::string& gameKey);
+
+// Record a successful launch. Best-effort persist.
+void recordLaunch(const std::string& gameKey, long long unixSeconds);
 
 }  // namespace ss::settings
