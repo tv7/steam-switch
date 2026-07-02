@@ -80,15 +80,15 @@ if(Qt6_FOUND)
             ui/qml/AppState.qml
             ui/qml/AmbientBackground.qml
             ui/qml/AppScrollBar.qml
-            ui/qml/SideNavItem.qml
-            ui/qml/StoreChip.qml
             ui/qml/Toggle.qml
+            ui/qml/Chip.qml
             ui/qml/GameCard.qml
+            ui/qml/Shelf.qml
+            ui/qml/SearchPalette.qml
             ui/qml/LibraryView.qml
             ui/qml/DetailView.qml
             ui/qml/AccountsView.qml
             ui/qml/SettingsView.qml
-            ui/qml/ManagePanel.qml
             ui/qml/OnboardingOverlay.qml
     )
     # Bundle the UI fonts into the binary so the typography ships without any system

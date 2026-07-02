@@ -11,6 +11,7 @@
 
 #include <QSortFilterProxyModel>
 #include <QString>
+#include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
 
 namespace ss::ui {
@@ -40,6 +41,10 @@ public:
     void setStoreFilter(const QString& store);      // "all" | store name ("Steam"/…)
     void setSortMode(const QString& mode);          // "az" | "za" | "recent"
     void setPlayedOnly(bool v);                     // only rows with lastPlayed > 0
+
+    // All roles of one (proxied) row as a JS object — lets QML read a row
+    // without a delegate (hero pick, palette Enter-to-play).
+    Q_INVOKABLE QVariantMap gameAt(int row) const;
 
 signals:
     void filterChanged();

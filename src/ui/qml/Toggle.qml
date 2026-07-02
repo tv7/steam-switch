@@ -6,8 +6,8 @@ import Orbit
 Item {
     id: root
     property bool on: false
-    property string accent: AppState.accent
-    property string accentFg: AppState.accentFg
+    property color accent: Theme.accent
+    property color accentFg: Theme.accentFg
     signal toggled()
 
     implicitWidth: 42

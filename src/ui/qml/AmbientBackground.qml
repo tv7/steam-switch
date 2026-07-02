@@ -1,46 +1,36 @@
-// The moody, accent-tinted backdrop behind the whole shell. The design blurs the
-// active game's cover; we approximate that dependency-free with a dark vertical
-// wash plus an accent glow from the top that shifts with the current accent.
+// CINEMA backdrop: the flat near-black canvas with two very soft color glows
+// (the mocks' blurred .glow blobs — approximated with radial gradients, no
+// GraphicalEffects dependency).
 import QtQuick
 import Orbit
 
 Item {
     id: root
-    property string accent: AppState.accent
 
-    // base canvas: top slightly lifted toward the accent, fading to near-black
+    Rectangle { anchors.fill: parent; color: Theme.bg }
+
+    // cool glow, top-left (accounts/settings mocks)
     Rectangle {
-        anchors.fill: parent
+        width: parent.width * 0.7; height: width
+        x: -width * 0.35; y: -width * 0.45
+        radius: width / 2
+        opacity: 0.5
         gradient: Gradient {
-            GradientStop { position: 0.0; color: Theme.canvasTop }
-            GradientStop { position: 0.55; color: Qt.darker(Theme.canvasTop, 1.9) }
-            GradientStop { position: 1.0; color: Theme.canvasBottom }
+            GradientStop { position: 0.0; color: Qt.rgba(0.07, 0.145, 0.235, 0.55) }
+            GradientStop { position: 0.5; color: Qt.rgba(0.07, 0.145, 0.235, 0.18) }
+            GradientStop { position: 1.0; color: "transparent" }
         }
     }
-
-    // accent glow washing down from the top ~half of the window
+    // warm amber glow, bottom-right (settings mock)
     Rectangle {
-        id: glow
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        height: parent.height * 0.62
-        property color acc: Qt.color(root.accent)
-        Behavior on acc { ColorAnimation { duration: 700; easing.type: Easing.OutCubic } }
+        width: parent.width * 0.55; height: width
+        x: parent.width - width * 0.55; y: parent.height - width * 0.5
+        radius: width / 2
+        opacity: 0.4
         gradient: Gradient {
-            GradientStop { position: 0.0; color: Qt.rgba(glow.acc.r, glow.acc.g, glow.acc.b, 0.30) }
-            GradientStop { position: 0.5; color: Qt.rgba(glow.acc.r, glow.acc.g, glow.acc.b, 0.10) }
-            GradientStop { position: 1.0; color: Qt.rgba(glow.acc.r, glow.acc.g, glow.acc.b, 0.0) }
-        }
-    }
-
-    // subtle darkening scrim for legibility over the glow
-    Rectangle {
-        anchors.fill: parent
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: Qt.rgba(0.031, 0.043, 0.063, 0.28) }
-            GradientStop { position: 0.72; color: Qt.rgba(0.031, 0.043, 0.063, 0.60) }
-            GradientStop { position: 1.0; color: Qt.rgba(0.031, 0.043, 0.063, 0.82) }
+            GradientStop { position: 0.0; color: Qt.rgba(0.20, 0.137, 0.055, 0.6) }
+            GradientStop { position: 0.5; color: Qt.rgba(0.20, 0.137, 0.055, 0.2) }
+            GradientStop { position: 1.0; color: "transparent" }
         }
     }
 }

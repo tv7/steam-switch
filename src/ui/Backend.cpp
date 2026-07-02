@@ -44,13 +44,15 @@ constexpr qint64 kNonSteamIdBase = 1LL << 40;   // ~1.1e12, far above any Steam 
 
 // Per-store brand identity for the multi-store UI (chip/badge color, short label,
 // and readable foreground). Mirrors the ORBIT design's store palette.
+// Colors mirror the CINEMA palette (design/m1base.css --steam/--epic/--gog/--xbox
+// and Theme.qml storeMeta — keep the three in sync).
 struct StoreBrand { const char* key; const char* name; const char* shortName; QString color; QString fg; };
 StoreBrand storeBrand(Store s) {
     switch (s) {
-        case Store::Steam: return {"steam", "Steam",     "STEAM",     "#2a7fd4", "#ffffff"};
-        case Store::Epic:  return {"epic",  "Epic Games","EPIC",      "#d9d9e0", "#0a0a0c"};
-        case Store::Gog:   return {"gog",   "GOG",       "GOG",       "#9b4dde", "#ffffff"};
-        case Store::Xbox:  return {"xbox",  "Game Pass", "GAME PASS", "#3fae4f", "#ffffff"};
+        case Store::Steam: return {"steam", "Steam",     "STEAM",     "#66c0f4", "#062032"};
+        case Store::Epic:  return {"epic",  "Epic Games","EPIC",      "#a78bfa", "#160e2e"};
+        case Store::Gog:   return {"gog",   "GOG",       "GOG",       "#c084fc", "#22093a"};
+        case Store::Xbox:  return {"xbox",  "Game Pass", "GAME PASS", "#4ade80", "#0c2913"};
     }
     return {"?", "Unknown", "?", "#9aa0a6", "#ffffff"};
 }

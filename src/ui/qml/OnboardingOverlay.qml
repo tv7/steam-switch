@@ -33,16 +33,13 @@ Item {
         AppState.go("library");
     }
 
-    // opaque backdrop (hides the app behind) — approximates the design's radial
+    // opaque backdrop (hides the app behind)
     Rectangle {
         anchors.fill: parent
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: Theme.canvasTop }
-            GradientStop { position: 0.62; color: Theme.canvasBottom }
-            GradientStop { position: 1.0; color: Theme.canvasBottom }
-        }
+        color: Theme.bg
         MouseArea { anchors.fill: parent }   // swallow clicks to the app behind
     }
+    AmbientBackground { anchors.fill: parent }
 
     // ============================ WELCOME ============================
     ColumnLayout {
@@ -51,12 +48,12 @@ Item {
         visible: AppState.onboarding === "welcome"
         spacing: 0
 
-        Rectangle {
+        Image {
             Layout.alignment: Qt.AlignHCenter
-            Layout.preferredWidth: 66; Layout.preferredHeight: 66; radius: 20
+            Layout.preferredWidth: 72; Layout.preferredHeight: 72
             Layout.bottomMargin: 26
-            gradient: Gradient { GradientStop { position: 0; color: "#5fb8ff" }
-                                 GradientStop { position: 1; color: "#2a7fd4" } }
+            source: "qrc:/icons/orbit-128.png"; sourceSize: Qt.size(128, 128)
+            smooth: true; mipmap: true
         }
         Label {
             Layout.alignment: Qt.AlignHCenter
@@ -133,9 +130,9 @@ Item {
                                     font.family: Theme.fontBody; font.pixelSize: 14; font.weight: Font.Bold }
                                 Rectangle { visible: modelData.isSteam
                                     implicitWidth: multi.implicitWidth + 12; implicitHeight: 16; radius: 4
-                                    color: Qt.rgba(0.373, 0.722, 1, 0.14)
+                                    color: Qt.rgba(0.4, 0.753, 0.957, 0.14)
                                     Label { id: multi; anchors.centerIn: parent; text: qsTr("MULTI")
-                                        color: "#5fb8ff"; font.family: Theme.fontBody
+                                        color: "#66c0f4"; font.family: Theme.fontBody
                                         font.pixelSize: 8; font.weight: Font.Bold; font.letterSpacing: 0.6 } }
                             }
                             Label { text: root.descByKey[modelData.key] || ""
@@ -211,17 +208,17 @@ Item {
 
     // ---- inline components ----
 
-    // Steam right-slot: a real "Add account" action.
+    // Steam right-slot: a real "Add account" action (Steam brand blue).
     Component {
         id: steamAction
         Rectangle {
             implicitWidth: 120; implicitHeight: 38; radius: 9
-            color: addHover.containsMouse ? "#5fb8ff" : Qt.rgba(0.373, 0.722, 1, 0.14)
-            border.width: 1; border.color: addHover.containsMouse ? "transparent" : Qt.rgba(0.373, 0.722, 1, 0.4)
+            color: addHover.containsMouse ? "#66c0f4" : Qt.rgba(0.4, 0.753, 0.957, 0.14)
+            border.width: 1; border.color: addHover.containsMouse ? "transparent" : Qt.rgba(0.4, 0.753, 0.957, 0.4)
             RowLayout {
                 anchors.centerIn: parent; spacing: 6
-                Label { text: "＋"; color: addHover.containsMouse ? "#04141f" : "#5fb8ff"; font.pixelSize: 13 }
-                Label { text: qsTr("Add account"); color: addHover.containsMouse ? "#04141f" : "#5fb8ff"
+                Label { text: "＋"; color: addHover.containsMouse ? "#062032" : "#66c0f4"; font.pixelSize: 13 }
+                Label { text: qsTr("Add account"); color: addHover.containsMouse ? "#062032" : "#66c0f4"
                     font.family: Theme.fontBody; font.pixelSize: 12; font.weight: Font.Bold }
             }
             MouseArea { id: addHover; anchors.fill: parent; hoverEnabled: true
@@ -250,6 +247,7 @@ Item {
     }
 
     // ---- shared button styles ----
+    // CINEMA primary = the white play pill.
     component PrimaryButton: Rectangle {
         property string label: ""
         property bool compact: false
@@ -257,16 +255,16 @@ Item {
         signal clicked()
         implicitWidth: prow.implicitWidth + (compact ? 44 : 80)
         implicitHeight: compact ? 44 : 50
-        radius: compact ? 10 : 11
-        color: "#5fb8ff"
+        radius: implicitHeight / 2
+        color: pbHover.containsMouse ? "#e8ecf5" : "#ffffff"
         transform: Translate { y: pbHover.containsMouse ? -2 : 0
             Behavior on y { NumberAnimation { duration: 120 } } }
         RowLayout {
             id: prow; anchors.centerIn: parent; spacing: 9
-            Label { text: label; color: "#04141f"
-                font.family: Theme.fontBody; font.pixelSize: compact ? 14 : 15; font.weight: Font.Bold }
+            Label { text: label; color: "#0b0d12"
+                font.family: Theme.fontBody; font.pixelSize: compact ? 14 : 15; font.weight: Font.ExtraBold }
             Canvas { visible: withArrow; Layout.preferredWidth: 16; Layout.preferredHeight: 16
-                onPaint: { var c = getContext("2d"); c.reset(); c.strokeStyle = "#04141f";
+                onPaint: { var c = getContext("2d"); c.reset(); c.strokeStyle = "#0b0d12";
                     c.lineWidth = 2.4; c.lineCap = "round"; c.lineJoin = "round";
                     c.beginPath(); c.moveTo(3, 8); c.lineTo(13, 8);
                     c.moveTo(9, 4); c.lineTo(13, 8); c.lineTo(9, 12); c.stroke(); } }

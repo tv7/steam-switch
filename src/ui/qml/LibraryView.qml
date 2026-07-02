@@ -1,5 +1,7 @@
-// The home / library screen: search + refresh + offline toggle, the "Your library"
-// heading with a live count, store & account filter chip rows, and the cover grid.
+// CINEMA library: a full-bleed hero of the last-played (or random) game with
+// instant Play, then horizontal shelves — Continue playing + one per store.
+// Everything shown is real: hero art via requestHero, chips only where data
+// exists, shelves are live filters over the scanned model.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -8,207 +10,244 @@ import Orbit
 Item {
     id: root
 
-    ColumnLayout {
+    // ---- hero pick ------------------------------------------------------------
+    // "last": the most recently played game (Steam localconfig / ORBIT history);
+    // "random": any game, re-rolled per scan. Falls back A->Z when nothing has
+    // been played yet; null when the library is empty.
+    GameFilter { id: recentGames; sourceModel: backend.allGames; sortMode: "recent"; playedOnly: true }
+    GameFilter { id: anyGames; sourceModel: backend.allGames; sortMode: "az" }
+
+    property var heroGame: null
+    property string heroUrl: ""
+
+    function recastHero() {
+        var g = null;
+        if (backend.heroMode === "random" && anyGames.count > 0)
+            g = anyGames.gameAt(Math.floor(Math.random() * anyGames.count));
+        else if (recentGames.count > 0)
+            g = recentGames.gameAt(0);
+        else if (anyGames.count > 0)
+            g = anyGames.gameAt(0);
+        if (g && heroGame && g.appid === heroGame.appid) return;
+        heroGame = g;
+        heroUrl = "";
+        if (g) backend.requestHero(g.appid);
+    }
+    Connections {
+        target: backend
+        function onStateChanged() { root.recastHero() }
+        function onHeroModeChanged() { root.heroGame = null; root.recastHero() }
+        function onHeroReady(appid, dataUrl) {
+            if (root.heroGame && appid === root.heroGame.appid && dataUrl.length)
+                root.heroUrl = dataUrl
+        }
+    }
+    Component.onCompleted: recastHero()
+
+    readonly property var heroStore: heroGame ? Theme.store(heroGame.store) : null
+
+    Flickable {
         anchors.fill: parent
-        anchors.leftMargin: 28; anchors.rightMargin: 28
-        anchors.topMargin: 24; anchors.bottomMargin: 0
-        spacing: 0
+        contentHeight: content.implicitHeight + 30
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        ScrollBar.vertical: AppScrollBar {}
 
-        // ---- top bar: search + refresh + offline ----
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.bottomMargin: 22
-            spacing: 12
+        ColumnLayout {
+            id: content
+            width: root.width
+            spacing: 0
 
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: 44
-                radius: 10
-                color: Theme.input
-                border.width: 1
-                border.color: search.activeFocus ? AppState.accent : Qt.rgba(1, 1, 1, 0.1)
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 14; anchors.rightMargin: 14
-                    spacing: 10
-                    Canvas {
-                        Layout.preferredWidth: 16; Layout.preferredHeight: 16
-                        onPaint: { var c = getContext("2d"); c.reset();
-                            c.strokeStyle = Qt.rgba(1,1,1,0.42); c.lineWidth = 2; c.lineCap = "round";
-                            c.beginPath(); c.arc(6.8, 6.8, 4.6, 0, Math.PI*2); c.stroke();
-                            c.beginPath(); c.moveTo(10.6, 10.6); c.lineTo(14.5, 14.5); c.stroke(); }
-                    }
-                    TextField {
-                        id: search
-                        Layout.fillWidth: true
-                        placeholderText: qsTr("Search your library")
-                        color: Theme.text
-                        placeholderTextColor: Theme.faint
-                        font.family: Theme.fontBody; font.pixelSize: 14; font.weight: Font.Medium
-                        background: null
-                        onTextChanged: backend.setSearch(text)
-                    }
-                }
-            }
-
-            // refresh
-            Rectangle {
-                Layout.preferredWidth: 44; Layout.preferredHeight: 44
-                radius: 10
-                color: refreshHover.containsMouse ? Qt.rgba(0.11, 0.13, 0.17, 0.9) : Theme.input
-                border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.1)
-                // Font glyph, not Canvas — several hand-drawn arrow attempts
-                // rendered wrong on the real display; the Unicode refresh arrow
-                // always looks right (Windows falls back to Segoe UI Symbol).
-                Label {
-                    id: refreshIcon
-                    anchors.centerIn: parent
-                    text: "⟳"   // ⟳ clockwise gapped circle arrow
-                    font.pixelSize: 21
-                    font.weight: Font.Bold
-                    color: refreshHover.containsMouse ? "#fff" : Theme.muted
-                    transformOrigin: Item.Center
-                    RotationAnimation on rotation {
-                        running: backend.scanning; loops: Animation.Infinite
-                        from: 0; to: 360; duration: 900
-                        onRunningChanged: if (!running) refreshIcon.rotation = 0
-                    }
-                }
-                MouseArea { id: refreshHover; anchors.fill: parent; hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor; onClicked: backend.refresh() }
-                ToolTip.visible: refreshHover.containsMouse
-                ToolTip.delay: 600
-                ToolTip.text: qsTr("Rescan library")
-            }
-
-            // offline toggle
-            Rectangle {
-                Layout.preferredHeight: 44
-                implicitWidth: offRow.implicitWidth + 28
-                radius: 10
-                color: offHover.containsMouse ? Qt.rgba(0.11, 0.13, 0.17, 0.8) : Theme.input
-                border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.1)
-                RowLayout {
-                    id: offRow
-                    anchors.centerIn: parent
-                    spacing: 11
-                    ColumnLayout {
-                        spacing: 1
-                        Label { text: qsTr("Launch offline"); color: Theme.text
-                            font.family: Theme.fontBody; font.pixelSize: 13; font.weight: Font.DemiBold }
-                        Label { text: qsTr("Steam only"); color: Theme.faint
-                            font.family: Theme.fontBody; font.pixelSize: 11; font.weight: Font.Medium }
-                    }
-                    Toggle { on: AppState.offline; onToggled: AppState.offline = !AppState.offline }
-                }
-                MouseArea { id: offHover; anchors.fill: parent; hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: AppState.offline = !AppState.offline }
-            }
-        }
-
-        // ---- heading + count ----
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.bottomMargin: 16
-            Label { text: qsTr("Your library"); color: Theme.text
-                font.family: Theme.fontDisplay; font.pixelSize: 20; font.weight: Font.Bold }
-            Item { Layout.fillWidth: true }
-            Label { text: gv.count + qsTr(" of ") + backend.gameCount + qsTr(" games")
-                color: Theme.faint; font.family: Theme.fontBody; font.pixelSize: 13; font.weight: Font.Medium }
-        }
-
-        // ---- store filter chips ----
-        Flow {
-            Layout.fillWidth: true
-            Layout.bottomMargin: 9
-            spacing: 7
-            StoreChip {
-                label: qsTr("All stores")
-                active: AppState.storeFilter === "all"
-                onClicked: { AppState.storeFilter = "all"; backend.setStoreFilter("all") }
-            }
-            Repeater {
-                model: backend.stores
-                delegate: StoreChip {
-                    label: modelData.name
-                    activeColor: modelData.color
-                    active: AppState.storeFilter === modelData.storeName
-                    onClicked: { AppState.storeFilter = modelData.storeName;
-                                 backend.setStoreFilter(modelData.storeName) }
-                }
-            }
-        }
-
-        // ---- account filter chips ----
-        Flow {
-            Layout.fillWidth: true
-            Layout.bottomMargin: 22
-            spacing: 7
-            StoreChip {
-                label: qsTr("All accounts")
-                active: AppState.accountFilter === "all"
-                onClicked: { AppState.accountFilter = "all"; backend.setAccountFilter("all") }
-            }
-            Repeater {
-                model: backend.accounts
-                delegate: StoreChip {
-                    label: modelData.personaName
-                    active: AppState.accountFilter === modelData.steamid64
-                    onClicked: { AppState.accountFilter = modelData.steamid64;
-                                 backend.setAccountFilter(modelData.steamid64) }
-                }
-            }
-            StoreChip {
-                label: qsTr("Unmapped")
-                active: AppState.accountFilter === "unmapped"
-                onClicked: { AppState.accountFilter = "unmapped"; backend.setAccountFilter("unmapped") }
-            }
-        }
-
-        // ---- cover grid ----
-        GridView {
-            id: gv
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            clip: true
-            model: backend.games
-
-            readonly property int cols: 5
-            readonly property int gap: 18
-            cellWidth: Math.floor((width) / cols)
-            property real tileW: cellWidth - gap
-            cellHeight: Math.round(tileW * 4 / 3) + 58 + gap
-
-            delegate: Item {
-                width: gv.cellWidth
-                height: gv.cellHeight
-                GameCard {
-                    width: gv.tileW
-                    height: parent.height - gv.gap
-                }
-            }
-            ScrollBar.vertical: AppScrollBar {}
-
-            // empty / no-results state
+            // ================= hero =================
             Item {
-                anchors.centerIn: parent
-                width: 320; height: 120
-                visible: gv.count === 0 && !backend.scanning
-                Column {
-                    anchors.centerIn: parent
-                    spacing: 8
-                    Label { anchors.horizontalCenter: parent.horizontalCenter
-                        text: backend.gameCount === 0 ? qsTr("No games installed") : qsTr("No games found")
-                        color: Theme.text; font.family: Theme.fontDisplay; font.pixelSize: 17; font.weight: Font.Bold }
-                    Label { anchors.horizontalCenter: parent.horizontalCenter
-                        width: 320; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.WordWrap
-                        text: backend.gameCount === 0
-                            ? qsTr("Install a game in Steam, Epic, GOG or Game Pass and it will show up here.")
-                            : qsTr("Nothing matches the current search and filters.")
-                        color: Theme.faint; font.family: Theme.fontBody; font.pixelSize: 13 }
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.min(480, Math.max(330, Math.round(root.height * 0.55)))
+                visible: root.heroGame !== null
+
+                // art (or the per-game gradient while/if there's none)
+                Rectangle {
+                    anchors.fill: parent
+                    gradient: Gradient {
+                        GradientStop { position: 0.0
+                            color: root.heroGame ? Qt.darker(Theme.accentFor(root.heroGame.appid), 1.7) : Theme.bg }
+                        GradientStop { position: 1.0; color: Theme.bg }
+                    }
                 }
+                Image {
+                    anchors.fill: parent
+                    source: root.heroUrl
+                    fillMode: Image.PreserveAspectCrop
+                    verticalAlignment: Image.AlignTop
+                    asynchronous: true
+                    visible: root.heroUrl.length > 0
+                }
+                // fades: bottom into the page, left for legibility (mock .fade)
+                Rectangle {
+                    anchors.fill: parent
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: Qt.rgba(0.039, 0.047, 0.067, 0.25) }
+                        GradientStop { position: 0.35; color: Qt.rgba(0.039, 0.047, 0.067, 0.05) }
+                        GradientStop { position: 0.88; color: Qt.rgba(0.039, 0.047, 0.067, 0.92) }
+                        GradientStop { position: 1.0; color: Theme.bg }
+                    }
+                }
+                Rectangle {
+                    anchors.fill: parent
+                    gradient: Gradient {
+                        orientation: Gradient.Horizontal
+                        GradientStop { position: 0.0; color: Qt.rgba(0.039, 0.047, 0.067, 0.85) }
+                        GradientStop { position: 0.55; color: "transparent" }
+                    }
+                }
+
+                // info block
+                ColumnLayout {
+                    anchors.left: parent.left; anchors.leftMargin: 44
+                    anchors.bottom: parent.bottom; anchors.bottomMargin: 30
+                    width: Math.min(640, parent.width - 88)
+                    spacing: 0
+
+                    Label {
+                        text: root.heroGame
+                            ? (root.heroStore.short + (root.heroGame.store === "Steam" && root.heroGame.mapped
+                                   ? " · " + root.heroGame.accountName.toUpperCase()
+                                   : " · " + qsTr("READY TO PLAY")))
+                            : ""
+                        color: root.heroStore ? root.heroStore.color : Theme.muted
+                        font.family: Theme.fontBody; font.pixelSize: 11; font.weight: Font.ExtraBold
+                        font.letterSpacing: 2.2
+                    }
+                    Label {
+                        Layout.topMargin: 10
+                        Layout.fillWidth: true
+                        text: root.heroGame ? root.heroGame.name : ""
+                        color: Theme.text
+                        font.family: Theme.fontDisplay; font.pixelSize: 42; font.weight: Font.Bold
+                        wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight
+                    }
+                    Row {
+                        Layout.topMargin: 12
+                        spacing: 8
+                        Chip { text: root.heroGame && root.heroGame.fullyInstalled
+                                   ? qsTr("Installed") : qsTr("Not fully installed")
+                               fillColor: root.heroGame && root.heroGame.fullyInstalled ? Theme.store("Xbox").color : "" }
+                        Chip { visible: root.heroGame !== null && root.heroGame.store !== "Steam"
+                               text: root.heroGame ? qsTr("Launches via %1").arg(root.heroStore.name) : "" }
+                        Chip { visible: root.heroGame !== null && root.heroGame.playtime > 0
+                               text: root.heroGame ? Theme.hoursLabel(root.heroGame.playtime) + qsTr(" played") : "" }
+                        Chip { visible: root.heroGame !== null && root.heroGame.lastPlayed > 0
+                               text: root.heroGame ? qsTr("Last played %1").arg(Theme.relTime(root.heroGame.lastPlayed)) : "" }
+                    }
+                    Row {
+                        Layout.topMargin: 20
+                        spacing: 12
+                        // Play now
+                        Rectangle {
+                            width: playRow.implicitWidth + 52; height: 46; radius: 23
+                            color: playHover.containsMouse ? "#e8ecf5" : "#ffffff"
+                            opacity: backend.launching ? 0.5 : 1
+                            Row {
+                                id: playRow
+                                anchors.centerIn: parent; spacing: 10
+                                Label { text: "▶"; color: "#0b0d12"; font.pixelSize: 13
+                                    anchors.verticalCenter: parent.verticalCenter }
+                                Label { text: qsTr("Play now"); color: "#0b0d12"
+                                    font.family: Theme.fontBody; font.pixelSize: 14; font.weight: Font.ExtraBold
+                                    anchors.verticalCenter: parent.verticalCenter }
+                            }
+                            MouseArea { id: playHover; anchors.fill: parent; hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                enabled: !backend.launching
+                                onClicked: backend.play(root.heroGame.appid, AppState.offline) }
+                        }
+                        // Play offline (Steam only)
+                        Rectangle {
+                            visible: root.heroGame !== null && root.heroGame.store === "Steam"
+                            width: offLabel.implicitWidth + 40; height: 46; radius: 23
+                            color: offHover.containsMouse ? Theme.fillHover : Theme.fill
+                            border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.22)
+                            opacity: backend.launching ? 0.5 : 1
+                            Label { id: offLabel; anchors.centerIn: parent; text: qsTr("Play offline")
+                                color: Theme.text
+                                font.family: Theme.fontBody; font.pixelSize: 13; font.weight: Font.Bold }
+                            MouseArea { id: offHover; anchors.fill: parent; hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                enabled: !backend.launching
+                                onClicked: backend.play(root.heroGame.appid, true) }
+                        }
+                        // Details ghost
+                        Rectangle {
+                            width: detLabel.implicitWidth + 40; height: 46; radius: 23
+                            color: detHover.containsMouse ? Theme.fillHover : "transparent"
+                            border.width: 1; border.color: Theme.line
+                            Label { id: detLabel; anchors.centerIn: parent; text: qsTr("Details")
+                                color: Theme.muted
+                                font.family: Theme.fontBody; font.pixelSize: 13; font.weight: Font.Bold }
+                            MouseArea { id: detHover; anchors.fill: parent; hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: AppState.open(root.heroGame) }
+                        }
+                    }
+                    Label {
+                        Layout.topMargin: 12
+                        text: root.heroGame === null ? ""
+                            : root.heroGame.store !== "Steam"
+                              ? qsTr("No account switch needed — launches straight through %1.").arg(root.heroStore.name)
+                              : root.heroGame.mapped
+                                ? qsTr("Play switches Steam to %1 and signs in — no manual account swapping.").arg(root.heroGame.accountName)
+                                : qsTr("This game isn't mapped to an account yet — open Details to pin one.")
+                        color: Theme.faint
+                        font.family: Theme.fontBody; font.pixelSize: 12; font.weight: Font.DemiBold
+                    }
+                }
+            }
+
+            // spacing under the top bar when there's no hero (empty library)
+            Item { Layout.preferredHeight: 90; visible: root.heroGame === null }
+
+            // ================= shelves =================
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: 44; Layout.rightMargin: 44
+                Layout.topMargin: 6
+                spacing: 22
+
+                Shelf {
+                    Layout.fillWidth: true
+                    title: qsTr("Continue playing")
+                    model: recentGames
+                }
+
+                Repeater {
+                    model: backend.stores
+                    delegate: Shelf {
+                        Layout.fillWidth: true
+                        title: modelData.name
+                        dotColor: Theme.store(modelData.storeName).color
+                        model: storeFilter
+                        property var storeFilter: GameFilter {
+                            sourceModel: backend.allGames
+                            storeFilter: modelData.storeName
+                            sortMode: "az"
+                        }
+                    }
+                }
+            }
+
+            // ================= empty state =================
+            ColumnLayout {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.topMargin: 120
+                spacing: 8
+                visible: anyGames.count === 0 && !backend.scanning
+                Label { Layout.alignment: Qt.AlignHCenter
+                    text: qsTr("No games installed")
+                    color: Theme.text; font.family: Theme.fontDisplay; font.pixelSize: 18; font.weight: Font.Bold }
+                Label { Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: 360
+                    horizontalAlignment: Text.AlignHCenter; wrapMode: Text.WordWrap
+                    text: qsTr("Install a game in Steam, Epic, GOG or Game Pass and it will show up here.")
+                    color: Theme.faint; font.family: Theme.fontBody; font.pixelSize: 13 }
             }
         }
     }

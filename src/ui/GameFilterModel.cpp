@@ -52,6 +52,16 @@ void GameFilterModel::setPlayedOnly(bool v) {
     emit filterChanged();
 }
 
+QVariantMap GameFilterModel::gameAt(int row) const {
+    QVariantMap out;
+    QModelIndex idx = index(row, 0);
+    if (!idx.isValid()) return out;
+    const auto roles = roleNames();
+    for (auto it = roles.constBegin(); it != roles.constEnd(); ++it)
+        out[QString::fromUtf8(it.value())] = idx.data(it.key());
+    return out;
+}
+
 bool GameFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const {
     QModelIndex idx = sourceModel()->index(sourceRow, 0, sourceParent);
     if (!idx.isValid()) return false;
